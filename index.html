@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XML Tag Visualizer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>XML Tag Visualizer</h1>
+      <p class="page-intro">
+        Choose an analysis XML file to see tag counts and a timeline of tagged instances.
+      </p>
+    </header>
+
+    <section class="file-input-section" aria-labelledby="file-input-label">
+      <label id="file-input-label" class="file-input-label" for="analysis-file-input">
+        Analysis XML file
+      </label>
+      <input
+        id="analysis-file-input"
+        class="file-input"
+        type="file"
+        accept=".xml,application/xml,text/xml"
+      />
+      <p id="selected-file-name" class="selected-file-name">No file selected</p>
+      <p id="read-error-message" class="read-error-message" hidden role="alert"></p>
+    </section>
+
+    <main id="visualization-root" class="visualization-root" aria-live="polite"></main>
+
+    <script src="src/analysisDocument.js"></script>
+    <script src="src/readAnalysisFile.js"></script>
+    <script src="src/writeAnalysisFile.js"></script>
+    <script src="src/editAnalysisDocument.js"></script>
+    <script src="src/countTags.js"></script>
+    <script src="src/buildTagTimeline.js"></script>
+    <script src="src/renderVisualization.js"></script>
+    <script src="src/startApplication.js"></script>
+  </body>
+</html>

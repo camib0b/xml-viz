@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<file>
+  <ALL_INSTANCES>
+    <instance>
+      <ID>1</ID>
+      <start>10</start>
+      <end>12</end>
+      <code>Inicio</code>
+    </instance>
+    <instance>
+      <ID>2</ID>
+      <start>10</start>
+      <end>100</end>
+      <code>Q1</code>
+    </instance>
+    <instance>
+      <ID>3</ID>
+      <start>30</start>
+      <end>40</end>
+      <code>UCB GOAL+</code>
+      <label>
+        <group>RESULTADO</group>
+        <text>UCB 1 - 0 OR</text>
+      </label>
+      <label>
+        <group>QUARTOS</group>
+        <text>Q1</text>
+      </label>
+    </instance>
+    <instance>
+      <ID>4</ID>
+      <start>55</start>
+      <end>60</end>
+      <code>OR GOAL-</code>
+      <label>
+        <group>RESULTADO</group>
+        <text>UCB 1 - 1 OR</text>
+      </label>
+      <label>
+        <group>QUARTOS</group>
+        <text>Q1</text>
+      </label>
+    </instance>
+  </ALL_INSTANCES>
+  <ROWS>
+    <row>
+      <code>Inicio</code>
+      <R>20000</R>
+      <G>20000</G>
+      <B>20000</B>
+    </row>
+    <row>
+      <code>Q1</code>
+      <R>28270</R>
+      <G>41120</G>
+      <B>28270</B>
+    </row>
+    <row>
+      <code>UCB GOAL+</code>
+      <R>14392</R>
+      <G>48573</G>
+      <B>63736</B>
+    </row>
+    <row>
+      <code>OR GOAL-</code>
+      <R>56540</R>
+      <G>9766</G>
+      <B>9766</B>
+    </row>
+  </ROWS>
+</file>

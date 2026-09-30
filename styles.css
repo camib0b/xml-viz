@@ -1,0 +1,178 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background: #fafafa;
+}
+
+.page-header,
+.file-input-section,
+.visualization-root {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.page-intro {
+  margin: 0;
+  color: #444;
+}
+
+.file-input-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.file-input {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.selected-file-name {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.read-error-message {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: #fde8e8;
+  border: 1px solid #e8a0a0;
+  color: #8b1a1a;
+}
+
+.section-heading {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.summary-line {
+  margin: 0 0 0.75rem;
+  color: #444;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  background: #fff;
+  border: 1px solid #ccc;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.data-table th {
+  background: #eee;
+  font-weight: 600;
+}
+
+.color-swatch {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid #999;
+  vertical-align: middle;
+}
+
+.timeline-section {
+  margin-top: 0.5rem;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0.75rem;
+}
+
+.timeline-axis {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.timeline-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-tick-row {
+  position: relative;
+  height: 1.25rem;
+  margin-left: 140px;
+}
+
+.timeline-tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+.timeline-scroll {
+  overflow-x: auto;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.timeline-lanes {
+  min-width: 800px;
+}
+
+.timeline-lane {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.35rem;
+  min-height: 1.5rem;
+}
+
+.timeline-lane-label {
+  flex: 0 0 140px;
+  font-size: 0.8rem;
+  padding-right: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-lane-track {
+  position: relative;
+  flex: 1;
+  height: 1.25rem;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+}
+
+.timeline-bar {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  min-width: 2px;
+  border-radius: 1px;
+  opacity: 0.9;
+}
+
+.timeline-bar:hover {
+  opacity: 1;
+  outline: 1px solid #333;
+  z-index: 1;
+}
