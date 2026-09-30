@@ -10,7 +10,7 @@
     <header class="page-header">
       <h1>XML Tag Visualizer</h1>
       <p class="page-intro">
-        Choose an analysis XML file to see tag counts and a timeline of tagged instances.
+        Choose an analysis XML file to see tag counts and a timeline. Select tag rows on the timeline to export a subset as a new XML file.
       </p>
     </header>
 
@@ -26,6 +26,7 @@
       />
       <p id="selected-file-name" class="selected-file-name">No file selected</p>
       <p id="read-error-message" class="read-error-message" hidden role="alert"></p>
+      <p id="export-status-message" class="export-status-message" hidden></p>
     </section>
 
     <main id="visualization-root" class="visualization-root" aria-live="polite"></main>
@@ -37,6 +38,7 @@
     <script src="src/countTags.js"></script>
     <script src="src/buildTagTimeline.js"></script>
     <script src="src/renderVisualization.js"></script>
+    <script src="src/renderExportPreparation.js"></script>
     <script src="src/startApplication.js"></script>
   </body>
 </html>

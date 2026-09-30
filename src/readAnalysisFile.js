@@ -3,6 +3,40 @@
 
   var xmlViz = global.xmlViz;
 
+  function readDirectTextContent(element) {
+    var text = "";
+    for (var nodeIndex = 0; nodeIndex < element.childNodes.length; nodeIndex += 1) {
+      var domNode = element.childNodes[nodeIndex];
+      if (domNode.nodeType === Node.TEXT_NODE) {
+        text += domNode.textContent;
+      }
+    }
+    return text;
+  }
+
+  function readAttributesFromElement(element) {
+    var attributes = [];
+    for (var attributeIndex = 0; attributeIndex < element.attributes.length; attributeIndex += 1) {
+      var attribute = element.attributes[attributeIndex];
+      attributes.push(xmlViz.createXmlAttribute(attribute.name, attribute.value));
+    }
+    return attributes;
+  }
+
+  function readXmlNodeFromElement(element) {
+    var childElements = element.children;
+    var childNodes = [];
+    for (var childIndex = 0; childIndex < childElements.length; childIndex += 1) {
+      childNodes.push(readXmlNodeFromElement(childElements[childIndex]));
+    }
+    return xmlViz.createXmlNode(
+      element.tagName,
+      readAttributesFromElement(element),
+      readDirectTextContent(element),
+      childNodes
+    );
+  }
+
   function readRequiredChildText(parentElement, tagName, contextMessage) {
     var child = parentElement.querySelector(":scope > " + tagName);
     if (!child || child.textContent.trim() === "") {
@@ -27,6 +61,15 @@
     return labels;
   }
 
+  function readOrderedChildNodes(parentElement) {
+    var elementChildren = parentElement.children;
+    var orderedChildNodes = [];
+    for (var index = 0; index < elementChildren.length; index += 1) {
+      orderedChildNodes.push(readXmlNodeFromElement(elementChildren[index]));
+    }
+    return orderedChildNodes;
+  }
+
   function readTaggedInstances(allInstancesElement) {
     var instanceElements = allInstancesElement.querySelectorAll(":scope > instance");
     var taggedInstances = [];
@@ -42,8 +85,16 @@
         throw new Error("Instance " + instanceId + ": start and end must be numbers.");
       }
       var labels = readInstanceLabels(instanceElement);
+      var orderedChildNodes = readOrderedChildNodes(instanceElement);
       taggedInstances.push(
-        xmlViz.createTaggedInstance(instanceId, startSeconds, endSeconds, code, labels)
+        xmlViz.createTaggedInstance(
+          instanceId,
+          startSeconds,
+          endSeconds,
+          code,
+          labels,
+          orderedChildNodes
+        )
       );
     }
     return taggedInstances;
@@ -68,9 +119,29 @@
       ) {
         throw new Error("Row " + code + ": R, G, and B must be numbers.");
       }
-      codeColors.push(xmlViz.createCodeColor(code, redChannel, greenChannel, blueChannel));
+      var orderedChildNodes = readOrderedChildNodes(rowElement);
+      codeColors.push(
+        xmlViz.createCodeColor(code, redChannel, greenChannel, blueChannel, orderedChildNodes)
+      );
     }
     return codeColors;
+  }
+
+  function readFileChildSlots(fileElement) {
+    var slots = [];
+    var elementChildren = fileElement.children;
+    for (var index = 0; index < elementChildren.length; index += 1) {
+      var childElement = elementChildren[index];
+      var tagName = childElement.tagName;
+      if (tagName === "ALL_INSTANCES") {
+        slots.push(xmlViz.createFileChildSlot("instances"));
+      } else if (tagName === "ROWS") {
+        slots.push(xmlViz.createFileChildSlot("rows"));
+      } else {
+        slots.push(xmlViz.createFileChildSlot("metadata", readXmlNodeFromElement(childElement)));
+      }
+    }
+    return slots;
   }
 
   function readAnalysisFile(xmlText) {
@@ -94,8 +165,9 @@
     var rowsElement = fileElement.querySelector(":scope > ROWS");
     var taggedInstances = readTaggedInstances(allInstancesElement);
     var codeColors = readCodeColors(rowsElement);
+    var fileChildSlots = readFileChildSlots(fileElement);
 
-    return xmlViz.createAnalysisDocument(taggedInstances, codeColors);
+    return xmlViz.createAnalysisDocument(taggedInstances, codeColors, fileChildSlots);
   }
 
   xmlViz.readAnalysisFile = readAnalysisFile;

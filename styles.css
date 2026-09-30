@@ -55,6 +55,14 @@ body {
   color: #8b1a1a;
 }
 
+.export-status-message {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  color: #1b5e20;
+}
+
 .section-heading {
   margin: 1.5rem 0 0.75rem;
   font-size: 1.15rem;
@@ -175,4 +183,94 @@ body {
   opacity: 1;
   outline: 1px solid #333;
   z-index: 1;
+}
+
+.timeline-lane-label-selectable {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 180px;
+}
+
+.timeline-lane-checkbox {
+  flex: 0 0 auto;
+}
+
+.timeline-lane-code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.export-selection-toolbar {
+  margin-bottom: 0.75rem;
+}
+
+.export-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.action-button {
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.export-preparation-form {
+  margin-top: 1rem;
+}
+
+.form-row {
+  margin-bottom: 0.5rem;
+}
+
+.form-text-input {
+  min-width: 16rem;
+  max-width: 100%;
+}
+
+.form-inline-label {
+  margin-right: 0.35rem;
+}
+
+.metadata-block {
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.metadata-include-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.metadata-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.metadata-field-label {
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.metadata-occurrence-scroll {
+  max-height: 12rem;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.export-preview-root {
+  margin-top: 0.5rem;
 }

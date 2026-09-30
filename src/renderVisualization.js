@@ -107,11 +107,48 @@
     axisElement.appendChild(tickRow);
   }
 
-  function renderTimelineLanes(lanesContainer, timeline) {
+  function buildSelectedCodeLookup(selectedCodes) {
+    var lookup = {};
+    if (!selectedCodes) {
+      return lookup;
+    }
+    for (var index = 0; index < selectedCodes.length; index += 1) {
+      lookup[selectedCodes[index]] = true;
+    }
+    return lookup;
+  }
+
+  function renderTimelineLanes(lanesContainer, timeline, tagSelectionOptions) {
+    var selectedLookup = buildSelectedCodeLookup(
+      tagSelectionOptions ? tagSelectionOptions.selectedCodes : []
+    );
+
     timeline.lanes.forEach(function (lane) {
       var laneRow = createElement("div", "timeline-lane");
       var laneLabel = createElement("div", "timeline-lane-label");
-      laneLabel.textContent = lane.code;
+      if (tagSelectionOptions) {
+        laneLabel.classList.add("timeline-lane-label-selectable");
+        var checkbox = createElement("input", "timeline-lane-checkbox");
+        checkbox.type = "checkbox";
+        checkbox.checked = Boolean(selectedLookup[lane.code]);
+        checkbox.addEventListener("change", function () {
+          var nextSelectedCodes = tagSelectionOptions.selectedCodes.slice();
+          if (checkbox.checked) {
+            if (nextSelectedCodes.indexOf(lane.code) < 0) {
+              nextSelectedCodes.push(lane.code);
+            }
+          } else {
+            nextSelectedCodes = nextSelectedCodes.filter(function (code) {
+              return code !== lane.code;
+            });
+          }
+          tagSelectionOptions.onSelectedCodesChange(nextSelectedCodes);
+        });
+        laneLabel.appendChild(checkbox);
+      }
+      var laneCodeText = createElement("span", "timeline-lane-code");
+      laneCodeText.textContent = lane.code;
+      laneLabel.appendChild(laneCodeText);
       laneRow.appendChild(laneLabel);
 
       var laneTrack = createElement("div", "timeline-lane-track");
@@ -128,9 +165,51 @@
     });
   }
 
-  function renderTagTimeline(parentElement, analysisDocument) {
+  function renderTagSelectionToolbar(parentElement, timeline, tagSelectionOptions) {
+    var toolbar = createElement("div", "export-selection-toolbar");
+    var helperText = createElement("p", "summary-line");
+    helperText.textContent =
+      "Select tag rows to include in a new XML file. Every instance with a selected tag is exported.";
+    toolbar.appendChild(helperText);
+
+    var buttonRow = createElement("div", "export-selection-actions");
+    var selectAllButton = createElement("button", "action-button");
+    selectAllButton.type = "button";
+    selectAllButton.textContent = "Select all tags";
+    selectAllButton.addEventListener("click", function () {
+      var allCodes = timeline.lanes.map(function (lane) {
+        return lane.code;
+      });
+      tagSelectionOptions.onSelectedCodesChange(allCodes);
+    });
+    buttonRow.appendChild(selectAllButton);
+
+    var clearButton = createElement("button", "action-button");
+    clearButton.type = "button";
+    clearButton.textContent = "Clear selection";
+    clearButton.addEventListener("click", function () {
+      tagSelectionOptions.onSelectedCodesChange([]);
+    });
+    buttonRow.appendChild(clearButton);
+
+    var prepareButton = createElement("button", "action-button action-button-primary");
+    prepareButton.type = "button";
+    prepareButton.textContent = "Prepare export";
+    prepareButton.disabled = tagSelectionOptions.selectedCodes.length === 0;
+    prepareButton.addEventListener("click", function () {
+      tagSelectionOptions.onPrepareExport();
+    });
+    buttonRow.appendChild(prepareButton);
+    toolbar.appendChild(buttonRow);
+    parentElement.appendChild(toolbar);
+  }
+
+  function renderTagTimeline(parentElement, analysisDocument, tagSelectionOptions) {
     appendHeading(parentElement, "Tag timeline");
     var timeline = xmlViz.buildTagTimeline(analysisDocument);
+    if (tagSelectionOptions) {
+      renderTagSelectionToolbar(parentElement, timeline, tagSelectionOptions);
+    }
     var timelineSection = createElement("div", "timeline-section");
     var axisElement = createElement("div", "timeline-axis");
     renderTimelineAxis(axisElement, timeline);
@@ -138,18 +217,18 @@
 
     var scrollContainer = createElement("div", "timeline-scroll");
     var lanesContainer = createElement("div", "timeline-lanes");
-    renderTimelineLanes(lanesContainer, timeline);
+    renderTimelineLanes(lanesContainer, timeline, tagSelectionOptions);
     scrollContainer.appendChild(lanesContainer);
     timelineSection.appendChild(scrollContainer);
     parentElement.appendChild(timelineSection);
   }
 
-  function renderVisualization(parentElement, analysisDocument) {
+  function renderVisualization(parentElement, analysisDocument, visualizationOptions) {
     parentElement.textContent = "";
     var countSummary = xmlViz.countTags(analysisDocument);
     renderTagCountTable(parentElement, countSummary);
     renderLabelGroupTable(parentElement, countSummary);
-    renderTagTimeline(parentElement, analysisDocument);
+    renderTagTimeline(parentElement, analysisDocument, visualizationOptions && visualizationOptions.tagSelection);
   }
 
   xmlViz.renderVisualization = renderVisualization;

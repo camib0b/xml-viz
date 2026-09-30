@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<file>
+  <SESSION_INFO>
+    <match_title>Sample derby</match_title>
+    <analyst>Test User</analyst>
+  </SESSION_INFO>
+  <ALL_INSTANCES>
+    <instance>
+      <ID>1</ID>
+      <start>10</start>
+      <end>12</end>
+      <code>Inicio</code>
+      <free_text>Kickoff note</free_text>
+    </instance>
+    <instance>
+      <ID>2</ID>
+      <start>10</start>
+      <end>100</end>
+      <code>Q1</code>
+    </instance>
+    <instance>
+      <ID>3</ID>
+      <start>30</start>
+      <end>40</end>
+      <code>UCB GOAL+</code>
+      <free_text>Header goal</free_text>
+      <label>
+        <group>RESULTADO</group>
+        <text>UCB 1 - 0 OR</text>
+      </label>
+    </instance>
+  </ALL_INSTANCES>
+  <ROWS>
+    <row>
+      <code>Inicio</code>
+      <R>20000</R>
+      <G>20000</G>
+      <B>20000</B>
+    </row>
+    <row>
+      <code>Q1</code>
+      <R>28270</R>
+      <G>41120</G>
+      <B>28270</B>
+    </row>
+    <row>
+      <code>UCB GOAL+</code>
+      <R>14392</R>
+      <G>48573</G>
+      <B>63736</B>
+    </row>
+  </ROWS>
+</file>
