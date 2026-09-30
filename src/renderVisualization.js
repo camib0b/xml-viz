@@ -118,6 +118,36 @@
     return lookup;
   }
 
+  function formatSelectedTagRowCount(selectedCount) {
+    if (selectedCount === 1) {
+      return "1 tag row selected";
+    }
+    return selectedCount + " tag rows selected";
+  }
+
+  function updateTagSelectionDisplay(parentElement, selectedCodes) {
+    var selectedLookup = buildSelectedCodeLookup(selectedCodes);
+    var laneRows = parentElement.querySelectorAll(".timeline-lane[data-tag-code]");
+    for (var laneIndex = 0; laneIndex < laneRows.length; laneIndex += 1) {
+      var laneRow = laneRows[laneIndex];
+      var tagCode = laneRow.getAttribute("data-tag-code");
+      var checkbox = laneRow.querySelector(".timeline-lane-checkbox");
+      if (checkbox) {
+        checkbox.checked = Boolean(selectedLookup[tagCode]);
+      }
+    }
+
+    var selectionCountElement = parentElement.querySelector(".export-selection-count");
+    if (selectionCountElement) {
+      selectionCountElement.textContent = formatSelectedTagRowCount(selectedCodes.length);
+    }
+
+    var prepareButton = parentElement.querySelector(".export-prepare-button");
+    if (prepareButton) {
+      prepareButton.disabled = selectedCodes.length === 0;
+    }
+  }
+
   function renderTimelineLanes(lanesContainer, timeline, tagSelectionOptions) {
     var selectedLookup = buildSelectedCodeLookup(
       tagSelectionOptions ? tagSelectionOptions.selectedCodes : []
@@ -125,6 +155,7 @@
 
     timeline.lanes.forEach(function (lane) {
       var laneRow = createElement("div", "timeline-lane");
+      laneRow.setAttribute("data-tag-code", lane.code);
       var laneLabel = createElement("div", "timeline-lane-label");
       if (tagSelectionOptions) {
         laneLabel.classList.add("timeline-lane-label-selectable");
@@ -192,7 +223,7 @@
     });
     buttonRow.appendChild(clearButton);
 
-    var prepareButton = createElement("button", "action-button action-button-primary");
+    var prepareButton = createElement("button", "action-button action-button-primary export-prepare-button");
     prepareButton.type = "button";
     prepareButton.textContent = "Prepare export";
     prepareButton.disabled = tagSelectionOptions.selectedCodes.length === 0;
@@ -200,6 +231,10 @@
       tagSelectionOptions.onPrepareExport();
     });
     buttonRow.appendChild(prepareButton);
+
+    var selectionCount = createElement("span", "export-selection-count");
+    selectionCount.textContent = formatSelectedTagRowCount(tagSelectionOptions.selectedCodes.length);
+    buttonRow.appendChild(selectionCount);
     toolbar.appendChild(buttonRow);
     parentElement.appendChild(toolbar);
   }
@@ -232,4 +267,5 @@
   }
 
   xmlViz.renderVisualization = renderVisualization;
+  xmlViz.updateTagSelectionDisplay = updateTagSelectionDisplay;
 })(typeof window !== "undefined" ? window : globalThis);

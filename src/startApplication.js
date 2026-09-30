@@ -62,6 +62,10 @@
     var exportDraft = null;
     var currentView = "overview";
 
+    function scrollPageToTop() {
+      window.scrollTo(0, 0);
+    }
+
     function clearExportStatus() {
       if (!exportStatusElement) {
         return;
@@ -90,7 +94,7 @@
           selectedCodes: selectedTagCodes.slice(),
           onSelectedCodesChange: function (nextSelectedCodes) {
             selectedTagCodes = nextSelectedCodes.slice();
-            renderOverviewView();
+            xmlViz.updateTagSelectionDisplay(visualizationRoot, selectedTagCodes);
           },
           onPrepareExport: function () {
             exportDraft = xmlViz.createDefaultExportDraft(
@@ -124,6 +128,7 @@
           showExportStatus("Saved " + downloadFileName + ".");
         },
       });
+      scrollPageToTop();
     }
 
     fileInput.addEventListener("change", function () {

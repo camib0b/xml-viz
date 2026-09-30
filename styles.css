@@ -271,6 +271,12 @@ body {
   padding-right: 0.25rem;
 }
 
+.export-selection-count {
+  align-self: center;
+  font-size: 0.9rem;
+  color: #444;
+}
+
 .export-preview-root {
   margin-top: 0.5rem;
 }
