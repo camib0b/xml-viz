@@ -85,26 +85,202 @@
     parentElement.appendChild(table);
   }
 
-  function renderTimelineAxis(axisElement, timeline) {
-    var axisLabels = createElement("div", "timeline-axis-labels");
-    var startLabel = createElement("span");
-    startLabel.textContent = timeline.axisStartLabel;
-    var endLabel = createElement("span");
-    endLabel.textContent = timeline.axisEndLabel;
-    axisLabels.appendChild(startLabel);
-    axisLabels.appendChild(endLabel);
-    axisElement.appendChild(axisLabels);
+  var cancelTimelineAxisWatch = null;
 
-    var tickRow = createElement("div", "timeline-tick-row");
-    timeline.axisTicks.forEach(function (tick) {
-      var tickMarker = createElement("div", "timeline-tick");
-      tickMarker.style.left = tick.positionPercent + "%";
-      var tickLabel = createElement("span");
-      tickLabel.textContent = tick.label;
-      tickMarker.appendChild(tickLabel);
+  function clearTimelineAxisLayoutWatcher() {
+    if (cancelTimelineAxisWatch) {
+      cancelTimelineAxisWatch();
+      cancelTimelineAxisWatch = null;
+    }
+  }
+
+  function timelineTagLabel(tagCode) {
+    var normalized = String(tagCode == null ? "" : tagCode).replace(/[\r\n]+/g, " ").trim();
+    if (!normalized) {
+      return "Untitled tag";
+    }
+    return normalized;
+  }
+
+  function measureCssLengthPixels(tickRow, cssLength, fallbackPixels) {
+    var probe = createElement("span", "timeline-tick");
+    probe.setAttribute("aria-hidden", "true");
+    probe.style.position = "fixed";
+    probe.style.left = "0";
+    probe.style.top = "0";
+    probe.style.visibility = "hidden";
+    probe.style.width = cssLength;
+    probe.style.padding = "0";
+    probe.style.border = "0";
+    tickRow.appendChild(probe);
+    var pixels = probe.offsetWidth;
+    tickRow.removeChild(probe);
+    if (pixels > 0) {
+      return pixels;
+    }
+    return fallbackPixels;
+  }
+
+  function measureWidestTimelineLabelPixels(tickRow, labelTexts) {
+    var probe = createElement("span", "timeline-tick");
+    probe.setAttribute("aria-hidden", "true");
+    probe.style.position = "fixed";
+    probe.style.left = "0";
+    probe.style.top = "0";
+    probe.style.visibility = "hidden";
+    probe.style.width = "auto";
+    tickRow.appendChild(probe);
+    var maxWidth = 0;
+    for (var index = 0; index < labelTexts.length; index += 1) {
+      probe.textContent = labelTexts[index];
+      if (probe.offsetWidth > maxWidth) {
+        maxWidth = probe.offsetWidth;
+      }
+    }
+    if (!(maxWidth > 0)) {
+      probe.textContent = "";
+      probe.style.width = "5ch";
+      maxWidth = probe.offsetWidth;
+    }
+    tickRow.removeChild(probe);
+    return maxWidth;
+  }
+
+  function renderAxisTickElements(tickRow, ticks) {
+    tickRow.textContent = "";
+    for (var index = 0; index < ticks.length; index += 1) {
+      var tick = ticks[index];
+      var tickMarker = createElement("span", "timeline-tick timeline-tick-" + tick.placement);
+      if (tick.placement === "center") {
+        tickMarker.style.left = tick.positionPercent + "%";
+      }
+      tickMarker.textContent = tick.label;
       tickRow.appendChild(tickMarker);
-    });
+    }
+  }
+
+  function setTimelineTrackMinimum(timelineSection, minimumTrackWidthPixels) {
+    var nextValue = Math.ceil(minimumTrackWidthPixels) + "px";
+    if (timelineSection.style.getPropertyValue("--timeline-track-min") !== nextValue) {
+      timelineSection.style.setProperty("--timeline-track-min", nextValue);
+    }
+  }
+
+  function layoutTimelineAxisTicks(tickRow, timelineSection, timeline) {
+    var gapPixels = measureCssLengthPixels(tickRow, "0.75rem", 12);
+    var labelWidthPixels = measureWidestTimelineLabelPixels(tickRow, [
+      timeline.axisStartLabel,
+      timeline.axisEndLabel,
+    ]);
+    if (!(labelWidthPixels > 0)) {
+      labelWidthPixels = measureCssLengthPixels(tickRow, "5ch", 40);
+    }
+
+    var borderPixels = tickRow.offsetWidth - tickRow.clientWidth;
+    if (!(borderPixels > 0)) {
+      borderPixels = 2;
+    }
+
+    var axis = null;
+    var trackWidthPixels = 0;
+    var minimumTrackWidthPixels = 0;
+    for (var passIndex = 0; passIndex < 2; passIndex += 1) {
+      var sizingAxis = xmlViz.buildTimelineAxisTicks(
+        timeline.timelineStartSeconds,
+        timeline.timelineEndSeconds,
+        tickRow.clientWidth,
+        labelWidthPixels,
+        gapPixels
+      );
+      minimumTrackWidthPixels = sizingAxis.minimumTrackWidthPixels + borderPixels;
+      setTimelineTrackMinimum(timelineSection, minimumTrackWidthPixels);
+      trackWidthPixels = tickRow.clientWidth;
+      axis = xmlViz.buildTimelineAxisTicks(
+        timeline.timelineStartSeconds,
+        timeline.timelineEndSeconds,
+        trackWidthPixels,
+        labelWidthPixels,
+        gapPixels
+      );
+      var producedLabels = [];
+      for (var tickIndex = 0; tickIndex < axis.ticks.length; tickIndex += 1) {
+        producedLabels.push(axis.ticks[tickIndex].label);
+      }
+      var producedLabelWidthPixels = measureWidestTimelineLabelPixels(tickRow, producedLabels);
+      if (!(producedLabelWidthPixels > labelWidthPixels + 0.5)) {
+        break;
+      }
+      labelWidthPixels = producedLabelWidthPixels;
+    }
+
+    if (!(trackWidthPixels > 0)) {
+      renderAxisTickElements(tickRow, axis.ticks);
+      tickRow._timelineLayoutKey = "";
+      return;
+    }
+
+    var layoutKey = [
+      trackWidthPixels,
+      labelWidthPixels,
+      gapPixels,
+      Math.ceil(minimumTrackWidthPixels),
+      axis.ticks.length,
+    ].join(":");
+    if (tickRow._timelineLayoutKey === layoutKey) {
+      return;
+    }
+    tickRow._timelineLayoutKey = layoutKey;
+    renderAxisTickElements(tickRow, axis.ticks);
+  }
+
+  function watchTimelineAxis(tickRow, timelineSection, timeline) {
+    var cancelled = false;
+    var frameId = 0;
+    var observer = null;
+
+    function requestRefresh() {
+      if (cancelled || frameId) {
+        return;
+      }
+      frameId = window.requestAnimationFrame(function () {
+        frameId = 0;
+        if (cancelled || !tickRow.isConnected) {
+          return;
+        }
+        layoutTimelineAxisTicks(tickRow, timelineSection, timeline);
+      });
+    }
+
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(requestRefresh);
+      observer.observe(tickRow);
+    }
+    window.addEventListener("resize", requestRefresh);
+    if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === "function") {
+      document.fonts.ready.then(function () {
+        requestRefresh();
+      });
+    }
+
+    cancelTimelineAxisWatch = function () {
+      cancelled = true;
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+      if (observer) {
+        observer.disconnect();
+      }
+      window.removeEventListener("resize", requestRefresh);
+    };
+  }
+
+  function renderTimelineAxis(axisElement) {
+    var spacer = createElement("div", "timeline-axis-spacer");
+    spacer.setAttribute("aria-hidden", "true");
+    var tickRow = createElement("div", "timeline-tick-row");
+    axisElement.appendChild(spacer);
     axisElement.appendChild(tickRow);
+    return tickRow;
   }
 
   function buildSelectedCodeLookup(selectedCodes) {
@@ -178,7 +354,10 @@
         laneLabel.appendChild(checkbox);
       }
       var laneCodeText = createElement("span", "timeline-lane-code");
-      laneCodeText.textContent = lane.code;
+      var tagLabel = timelineTagLabel(lane.code);
+      laneCodeText.textContent = tagLabel;
+      laneCodeText.title = tagLabel;
+      laneCodeText.setAttribute("dir", "auto");
       laneLabel.appendChild(laneCodeText);
       laneRow.appendChild(laneLabel);
 
@@ -242,23 +421,37 @@
   function renderTagTimeline(parentElement, analysisDocument, tagSelectionOptions) {
     appendHeading(parentElement, "Tag timeline");
     var timeline = xmlViz.buildTagTimeline(analysisDocument);
+    if (timeline.lanes.length === 0) {
+      var emptyMessage = createElement("p", "summary-line");
+      emptyMessage.textContent = "No tags to show.";
+      parentElement.appendChild(emptyMessage);
+      return;
+    }
     if (tagSelectionOptions) {
       renderTagSelectionToolbar(parentElement, timeline, tagSelectionOptions);
     }
     var timelineSection = createElement("div", "timeline-section");
-    var axisElement = createElement("div", "timeline-axis");
-    renderTimelineAxis(axisElement, timeline);
-    timelineSection.appendChild(axisElement);
-
+    if (tagSelectionOptions) {
+      timelineSection.classList.add("is-selectable");
+    }
     var scrollContainer = createElement("div", "timeline-scroll");
+    var sheet = createElement("div", "timeline-sheet");
+    var axisElement = createElement("div", "timeline-axis");
+    var tickRow = renderTimelineAxis(axisElement);
+    sheet.appendChild(axisElement);
+
     var lanesContainer = createElement("div", "timeline-lanes");
     renderTimelineLanes(lanesContainer, timeline, tagSelectionOptions);
-    scrollContainer.appendChild(lanesContainer);
+    sheet.appendChild(lanesContainer);
+    scrollContainer.appendChild(sheet);
     timelineSection.appendChild(scrollContainer);
     parentElement.appendChild(timelineSection);
+    layoutTimelineAxisTicks(tickRow, timelineSection, timeline);
+    watchTimelineAxis(tickRow, timelineSection, timeline);
   }
 
   function renderVisualization(parentElement, analysisDocument, visualizationOptions) {
+    clearTimelineAxisLayoutWatcher();
     parentElement.textContent = "";
     var countSummary = xmlViz.countTags(analysisDocument);
     renderTagCountTable(parentElement, countSummary);
