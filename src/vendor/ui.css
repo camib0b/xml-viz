@@ -32,6 +32,7 @@
   --contrib-q2: 172 38% 78%;
   --contrib-q3: 172 54% 46%;
   --contrib-q4: 172 56% 38%;
+  --accent-teal: 172 56% 38%;
   --series-portfolio: 200 16% 32%;
   --series-benchmark: 220 6% 46%;
   --number-positive: 152 32% 28%;
@@ -87,6 +88,7 @@
   --contrib-q2: 172 40% 20%;
   --contrib-q3: 172 52% 42%;
   --contrib-q4: 172 56% 52%;
+  --accent-teal: 172 56% 52%;
   --series-portfolio: 200 18% 74%;
   --series-benchmark: 220 8% 64%;
   --number-positive: 152 28% 68%;
@@ -285,8 +287,26 @@ select {
   }
 }
 
+@keyframes attention-pulse {
+  0%, 100% {
+    color: hsl(var(--muted-foreground));
+  }
+  50% {
+    color: hsl(var(--accent-teal));
+  }
+}
+
 .analytics-rise {
   animation: analytics-rise 250ms ease;
+}
+
+.attention-pulse {
+  animation-name: attention-pulse;
+  animation-duration: 1.2s;
+  animation-timing-function: ease-in-out;
+  animation-delay: 600ms;
+  animation-iteration-count: 3;
+  animation-fill-mode: none;
 }
 
 .portfolio-sync-bar {
@@ -698,6 +718,7 @@ progress.progress.progress-success::-moz-progress-bar {
   }
 
   .analytics-rise,
+  .attention-pulse,
   .portfolio-sync-bar,
   .portfolio-skeleton-block,
   .animate-fade-up,
