@@ -4,32 +4,74 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>XML Tag Visualizer</title>
+    <script>
+      (function () {
+        function resolveTheme() {
+          try {
+            var storedTheme = localStorage.getItem("theme");
+            if (storedTheme === "light" || storedTheme === "dark") {
+              return storedTheme;
+            }
+          } catch (error) {
+            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        function applyTheme() {
+          document.documentElement.classList.toggle("dark", resolveTheme() === "dark");
+        }
+
+        applyTheme();
+        window.addEventListener("storage", function (event) {
+          if (event.key === "theme") {
+            applyTheme();
+          }
+        });
+      })();
+    </script>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="page-header">
+    <div class="pattern-cross" aria-hidden="true"></div>
+    <div class="pattern-noise" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="site-header-bar">
+        <a class="back-link" href="https://camilaescudero.cl/">
+          <svg class="back-link-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 12H5"></path>
+            <path d="M12 19l-7-7 7-7"></path>
+          </svg>
+          Back
+        </a>
+      </div>
+    </header>
+
+    <main class="page-column">
       <h1>XML Tag Visualizer</h1>
       <p class="page-intro">
         Choose an analysis XML file to see tag counts and a timeline. Select tag rows on the timeline to export a subset as a new XML file.
       </p>
-    </header>
 
-    <section class="file-input-section" aria-labelledby="file-input-label">
-      <label id="file-input-label" class="file-input-label" for="analysis-file-input">
-        Analysis XML file
-      </label>
-      <input
-        id="analysis-file-input"
-        class="file-input"
-        type="file"
-        accept=".xml,application/xml,text/xml"
-      />
-      <p id="selected-file-name" class="selected-file-name">No file selected</p>
-      <p id="read-error-message" class="read-error-message" hidden role="alert"></p>
-      <p id="export-status-message" class="export-status-message" hidden></p>
-    </section>
+      <section class="file-input-section" aria-labelledby="file-input-label">
+        <label id="file-input-label" class="file-drop-zone" for="analysis-file-input">
+          <span class="file-drop-caption">Analysis XML file</span>
+          <input
+            id="analysis-file-input"
+            class="file-input"
+            type="file"
+            accept=".xml,application/xml,text/xml"
+          />
+          <span class="choose-file-button">Choose file</span>
+        </label>
+        <p id="selected-file-name" class="selected-file-name">No file selected</p>
+        <p id="read-error-message" class="read-error-message" hidden role="alert"></p>
+        <p id="export-status-message" class="export-status-message" hidden></p>
+      </section>
 
-    <main id="visualization-root" class="visualization-root" aria-live="polite"></main>
+      <div id="visualization-root" class="visualization-root" aria-live="polite"></div>
+    </main>
 
     <script src="src/analysisDocument.js"></script>
     <script src="src/readAnalysisFile.js"></script>
