@@ -166,52 +166,96 @@
     }
   }
 
+  function timelineAxisMeasurementLabels(timeline, showSeconds) {
+    return [
+      xmlViz.formatTimelineAxisLabel(timeline.timelineStartSeconds, showSeconds),
+      xmlViz.formatTimelineAxisLabel(timeline.timelineEndSeconds, showSeconds),
+    ];
+  }
+
   function layoutTimelineAxisTicks(tickRow, timelineSection, timeline) {
     var gapPixels = measureCssLengthPixels(tickRow, "0.75rem", 12);
-    var labelWidthPixels = measureWidestTimelineLabelPixels(tickRow, [
-      timeline.axisStartLabel,
-      timeline.axisEndLabel,
-    ]);
-    if (!(labelWidthPixels > 0)) {
-      labelWidthPixels = measureCssLengthPixels(tickRow, "5ch", 40);
-    }
-
     var borderPixels = tickRow.offsetWidth - tickRow.clientWidth;
     if (!(borderPixels > 0)) {
       borderPixels = 2;
     }
 
-    var axis = null;
-    var trackWidthPixels = 0;
-    var minimumTrackWidthPixels = 0;
-    for (var passIndex = 0; passIndex < 2; passIndex += 1) {
-      var sizingAxis = xmlViz.buildTimelineAxisTicks(
-        timeline.timelineStartSeconds,
-        timeline.timelineEndSeconds,
-        tickRow.clientWidth,
-        labelWidthPixels,
-        gapPixels
+    function labelWidthForMode(showSeconds) {
+      var measuredWidth = measureWidestTimelineLabelPixels(
+        tickRow,
+        timelineAxisMeasurementLabels(timeline, showSeconds)
       );
-      minimumTrackWidthPixels = sizingAxis.minimumTrackWidthPixels + borderPixels;
-      setTimelineTrackMinimum(timelineSection, minimumTrackWidthPixels);
-      trackWidthPixels = tickRow.clientWidth;
-      axis = xmlViz.buildTimelineAxisTicks(
-        timeline.timelineStartSeconds,
-        timeline.timelineEndSeconds,
-        trackWidthPixels,
-        labelWidthPixels,
-        gapPixels
-      );
-      var producedLabels = [];
-      for (var tickIndex = 0; tickIndex < axis.ticks.length; tickIndex += 1) {
-        producedLabels.push(axis.ticks[tickIndex].label);
+      if (measuredWidth > 0) {
+        return measuredWidth;
       }
-      var producedLabelWidthPixels = measureWidestTimelineLabelPixels(tickRow, producedLabels);
-      if (!(producedLabelWidthPixels > labelWidthPixels + 0.5)) {
-        break;
-      }
-      labelWidthPixels = producedLabelWidthPixels;
+      return measureCssLengthPixels(tickRow, showSeconds ? "5ch" : "3ch", showSeconds ? 40 : 24);
     }
+
+    function fitAxis(showSeconds, labelWidthPixels) {
+      var fittedLabelWidth = labelWidthPixels;
+      var axis = null;
+      var trackWidthPixels = 0;
+      var minimumTrackWidthPixels = 0;
+      for (var passIndex = 0; passIndex < 2; passIndex += 1) {
+        var sizingAxis = xmlViz.buildTimelineAxisTicks(
+          timeline.timelineStartSeconds,
+          timeline.timelineEndSeconds,
+          tickRow.clientWidth,
+          fittedLabelWidth,
+          gapPixels,
+          showSeconds
+        );
+        minimumTrackWidthPixels = sizingAxis.minimumTrackWidthPixels + borderPixels;
+        setTimelineTrackMinimum(timelineSection, minimumTrackWidthPixels);
+        trackWidthPixels = tickRow.clientWidth;
+        axis = xmlViz.buildTimelineAxisTicks(
+          timeline.timelineStartSeconds,
+          timeline.timelineEndSeconds,
+          trackWidthPixels,
+          fittedLabelWidth,
+          gapPixels,
+          showSeconds
+        );
+        var producedLabels = [];
+        for (var tickIndex = 0; tickIndex < axis.ticks.length; tickIndex += 1) {
+          producedLabels.push(axis.ticks[tickIndex].label);
+        }
+        var producedLabelWidthPixels = measureWidestTimelineLabelPixels(tickRow, producedLabels);
+        if (!(producedLabelWidthPixels > fittedLabelWidth + 0.5)) {
+          break;
+        }
+        fittedLabelWidth = producedLabelWidthPixels;
+      }
+      return {
+        axis: axis,
+        labelWidthPixels: fittedLabelWidth,
+        trackWidthPixels: trackWidthPixels,
+        minimumTrackWidthPixels: minimumTrackWidthPixels,
+      };
+    }
+
+    var showSeconds = xmlViz.timelineAxisShowsSeconds(
+      timeline.timelineStartSeconds,
+      timeline.timelineEndSeconds,
+      tickRow.clientWidth,
+      null
+    );
+    var fitted = fitAxis(showSeconds, labelWidthForMode(showSeconds));
+    var showSecondsAfterFit = xmlViz.timelineAxisShowsSeconds(
+      timeline.timelineStartSeconds,
+      timeline.timelineEndSeconds,
+      fitted.trackWidthPixels,
+      fitted.axis.intervalSeconds
+    );
+    if (showSecondsAfterFit !== showSeconds) {
+      showSeconds = showSecondsAfterFit;
+      fitted = fitAxis(showSeconds, labelWidthForMode(showSeconds));
+    }
+
+    var axis = fitted.axis;
+    var trackWidthPixels = fitted.trackWidthPixels;
+    var labelWidthPixels = fitted.labelWidthPixels;
+    var minimumTrackWidthPixels = fitted.minimumTrackWidthPixels;
 
     if (!(trackWidthPixels > 0)) {
       renderAxisTickElements(tickRow, axis.ticks);
@@ -225,6 +269,7 @@
       gapPixels,
       Math.ceil(minimumTrackWidthPixels),
       axis.ticks.length,
+      showSeconds ? "seconds" : "minutes",
     ].join(":");
     if (tickRow._timelineLayoutKey === layoutKey) {
       return;

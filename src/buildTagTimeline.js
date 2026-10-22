@@ -6,6 +6,8 @@
   var MINIMUM_BAR_WIDTH_PERCENT = 0.15;
   var FALLBACK_AXIS_LABEL_WIDTH_PIXELS = 40;
   var FALLBACK_AXIS_LABEL_GAP_PIXELS = 12;
+  // Phone bar tracks land under ~220px. The page column's track is above ~500px.
+  var AXIS_SECONDS_MIN_TRACK_PIXELS = 480;
   var NICE_AXIS_INTERVALS_SECONDS = [
     60,
     120,
@@ -75,13 +77,51 @@
     return alignedSeconds;
   }
 
+  function wholeMinuteCount(totalSeconds) {
+    return Math.floor(Math.floor(totalSeconds) / 60);
+  }
+
+  function formatTimelineAxisLabel(totalSeconds, showSeconds) {
+    if (showSeconds) {
+      return xmlViz.formatSecondsAsClock(totalSeconds);
+    }
+    return wholeMinuteCount(totalSeconds) + "m";
+  }
+
+  function axisRangeCollapsesWithoutSeconds(timelineStartSeconds, timelineEndSeconds) {
+    return wholeMinuteCount(timelineStartSeconds) === wholeMinuteCount(timelineEndSeconds);
+  }
+
+  function timelineAxisShowsSeconds(
+    timelineStartSeconds,
+    timelineEndSeconds,
+    trackWidthPixels,
+    intervalSeconds
+  ) {
+    if (axisRangeCollapsesWithoutSeconds(timelineStartSeconds, timelineEndSeconds)) {
+      return true;
+    }
+    if (!(trackWidthPixels >= AXIS_SECONDS_MIN_TRACK_PIXELS)) {
+      return false;
+    }
+    var intervalNeedsSeconds =
+      typeof intervalSeconds === "number" &&
+      intervalSeconds > 0 &&
+      intervalSeconds % 60 !== 0;
+    var startHasSeconds = Math.floor(timelineStartSeconds) % 60 !== 0;
+    var endHasSeconds = Math.floor(timelineEndSeconds) % 60 !== 0;
+    return intervalNeedsSeconds || startHasSeconds || endHasSeconds;
+  }
+
   function buildTimelineAxisTicks(
     timelineStartSeconds,
     timelineEndSeconds,
     trackWidthPixels,
     labelWidthPixels,
-    labelGapPixels
+    labelGapPixels,
+    showSeconds
   ) {
+    var useSecondPrecision = showSeconds === true;
     var spanSeconds = timelineSpanSeconds(timelineStartSeconds, timelineEndSeconds);
     var resolvedLabelWidth = resolvePositivePixels(
       labelWidthPixels,
@@ -94,7 +134,7 @@
       {
         seconds: timelineStartSeconds,
         positionPercent: 0,
-        label: xmlViz.formatSecondsAsClock(timelineStartSeconds),
+        label: formatTimelineAxisLabel(timelineStartSeconds, useSecondPrecision),
         placement: "start",
       },
     ];
@@ -130,7 +170,7 @@
         ticks.push({
           seconds: tickSeconds,
           positionPercent: (positionPixels / trackWidth) * 100,
-          label: xmlViz.formatSecondsAsClock(tickSeconds),
+          label: formatTimelineAxisLabel(tickSeconds, useSecondPrecision),
           placement: "center",
         });
       }
@@ -139,7 +179,7 @@
     ticks.push({
       seconds: timelineEndSeconds,
       positionPercent: 100,
-      label: xmlViz.formatSecondsAsClock(timelineEndSeconds),
+      label: formatTimelineAxisLabel(timelineEndSeconds, useSecondPrecision),
       placement: "end",
     });
 
@@ -148,6 +188,7 @@
       labelWidthPixels: resolvedLabelWidth,
       gapPixels: resolvedGap,
       minimumTrackWidthPixels: minimumTrackWidthPixels,
+      showSeconds: useSecondPrecision,
       ticks: ticks,
     };
   }
@@ -263,6 +304,8 @@
     };
   }
 
+  xmlViz.formatTimelineAxisLabel = formatTimelineAxisLabel;
+  xmlViz.timelineAxisShowsSeconds = timelineAxisShowsSeconds;
   xmlViz.buildTimelineAxisTicks = buildTimelineAxisTicks;
   xmlViz.buildTagTimeline = buildTagTimeline;
 })(typeof window !== "undefined" ? window : globalThis);
