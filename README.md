@@ -38,6 +38,16 @@ python3 -m http.server 8765
 
 Then open `http://localhost:8765/index.html`.
 
+## Shared interface styles
+
+Buttons, focus, the file picker, the drop zone, toasts, and progress use [@camib0b/ui](https://github.com/camib0b/ui). This page has no build step. Deploy copies `src/` with the page, so the built stylesheet is vendored at [`src/vendor/ui.css`](src/vendor/ui.css). `index.html` links that file before `styles.css`. `styles.css` keeps page layout, the chosen-file collapse, the sample landing animation, and the timeline.
+
+Refresh the vendored file from `main`:
+
+```bash
+scripts/sync-ui.sh
+```
+
 ## How to use the page
 
 1. **Select a file** — The name of the chosen file appears below the file control.
@@ -61,7 +71,9 @@ Other content in the file is preserved in the in-memory model for future export 
 | Path | Role |
 |------|------|
 | `index.html` | Page shell and script loading |
-| `styles.css` | Minimal layout |
+| `styles.css` | Page layout and timeline |
+| `src/vendor/ui.css` | Vendored [@camib0b/ui](https://github.com/camib0b/ui) interaction styles |
+| `scripts/sync-ui.sh` | Re-download `src/vendor/ui.css` |
 | `src/readAnalysisFile.js` | Parse XML into an in-memory document |
 | `src/writeAnalysisFile.js` | Serialize document back to XML (for future export) |
 | `src/editAnalysisDocument.js` | Pure helpers for filtering/editing (for future features) |
