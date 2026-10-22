@@ -2,6 +2,11 @@
   "use strict";
 
   var xmlViz = global.xmlViz;
+  var collapsedTagRowCount = 10;
+  var seeMoreLabel = "See more";
+  var seeLessLabel = "See less";
+  var tagCountsResizeListener = null;
+  var tagCountsHeightToken = 0;
 
   function createElement(tagName, className) {
     var element = document.createElement(tagName);
@@ -17,14 +22,24 @@
     parentElement.appendChild(heading);
   }
 
-  function renderTagCountTable(parentElement, countSummary) {
-    appendHeading(parentElement, "Tag counts");
-    var summaryLine = createElement("p", "summary-line");
-    summaryLine.textContent =
-      countSummary.totalInstanceCount + " tagged instances across " + countSummary.tagCounts.length + " tag types.";
-    parentElement.appendChild(summaryLine);
+  function formatCountLabel(count, singularLabel, pluralLabel) {
+    if (count === 1) {
+      return "1 " + singularLabel;
+    }
+    return count + " " + pluralLabel;
+  }
 
-    var table = createElement("table", "data-table");
+  function formatTagCountSummary(countSummary) {
+    return (
+      formatCountLabel(countSummary.totalInstanceCount, "tagged instance", "tagged instances") +
+      " across " +
+      formatCountLabel(countSummary.tagCounts.length, "tag type", "tag types") +
+      "."
+    );
+  }
+
+  function renderTagCountTable(parentElement, countSummary) {
+    var table = createElement("table", "data-table tag-count-table");
     var headerRow = createElement("tr");
     ["Tag", "Color", "Count"].forEach(function (columnTitle) {
       var headerCell = createElement("th");
@@ -35,6 +50,7 @@
 
     countSummary.tagCounts.forEach(function (tagCount) {
       var row = createElement("tr");
+      row.setAttribute("data-tag-count-row", "true");
       var codeCell = createElement("td");
       codeCell.textContent = tagCount.code;
       row.appendChild(codeCell);
@@ -57,7 +73,7 @@
 
   function renderLabelGroupTable(parentElement, countSummary) {
     appendHeading(parentElement, "Label groups");
-    var table = createElement("table", "data-table");
+    var table = createElement("table", "data-table label-group-table");
     var headerRow = createElement("tr");
     ["Group", "Text", "Count"].forEach(function (columnTitle) {
       var headerCell = createElement("th");
@@ -86,6 +102,208 @@
   }
 
   var cancelTimelineAxisWatch = null;
+
+  function prefersReducedMotion() {
+    return Boolean(
+      window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }
+
+  function setHiddenFromAssistiveTech(element, hidden) {
+    if (!element) {
+      return;
+    }
+    if (hidden) {
+      element.setAttribute("aria-hidden", "true");
+    } else {
+      element.removeAttribute("aria-hidden");
+    }
+  }
+
+  function syncTagCountsClipAccessibility(clipElement, expanded) {
+    var tagRows = clipElement.querySelectorAll("[data-tag-count-row]");
+    for (var index = 0; index < tagRows.length; index += 1) {
+      var hideRow = !expanded && index > collapsedTagRowCount;
+      setHiddenFromAssistiveTech(tagRows[index], hideRow);
+    }
+    setHiddenFromAssistiveTech(clipElement.querySelector(".section-heading"), !expanded);
+    setHiddenFromAssistiveTech(clipElement.querySelector(".label-group-table"), !expanded);
+  }
+
+  function measureCollapsedTagCountsHeight(clipElement) {
+    var tagRows = clipElement.querySelectorAll("[data-tag-count-row]");
+    var cutoffRow = tagRows[collapsedTagRowCount];
+    if (!cutoffRow) {
+      return clipElement.scrollHeight;
+    }
+    var clipRect = clipElement.getBoundingClientRect();
+    var rowRect = cutoffRow.getBoundingClientRect();
+    return rowRect.top - clipRect.top + rowRect.height / 2;
+  }
+
+  function applyCollapsedTagCountsHeight(clipElement) {
+    if (!clipElement.isConnected || !clipElement.classList.contains("is-collapsed")) {
+      return;
+    }
+    if (clipElement.classList.contains("is-height-animated")) {
+      return;
+    }
+    var collapsedHeight = measureCollapsedTagCountsHeight(clipElement);
+    if (!(collapsedHeight > 0)) {
+      return;
+    }
+    clipElement.style.height = collapsedHeight + "px";
+  }
+
+  function scheduleCollapsedTagCountsHeight(clipElement) {
+    applyCollapsedTagCountsHeight(clipElement);
+    window.requestAnimationFrame(function () {
+      applyCollapsedTagCountsHeight(clipElement);
+    });
+  }
+
+  function detachTagCountsResize() {
+    if (!tagCountsResizeListener) {
+      return;
+    }
+    window.removeEventListener("resize", tagCountsResizeListener);
+    tagCountsResizeListener = null;
+  }
+
+  function bindTagCountsResize(clipElement) {
+    detachTagCountsResize();
+    tagCountsResizeListener = function onTagCountsResize() {
+      if (!clipElement.isConnected) {
+        detachTagCountsResize();
+        return;
+      }
+      applyCollapsedTagCountsHeight(clipElement);
+    };
+    window.addEventListener("resize", tagCountsResizeListener);
+  }
+
+  function finishTagCountsHeight(clipElement, animationToken, expanded) {
+    if (clipElement.getAttribute("data-height-token") !== animationToken) {
+      return;
+    }
+    clipElement.classList.remove("is-height-animated");
+    if (expanded && clipElement.getAttribute("data-expanded") === "true") {
+      clipElement.style.height = "auto";
+    }
+  }
+
+  function playTagCountsHeight(clipElement, expanded) {
+    var collapsedHeight = measureCollapsedTagCountsHeight(clipElement);
+    if (!(collapsedHeight > 0)) {
+      clipElement.classList.toggle("is-collapsed", !expanded);
+      clipElement.style.height = expanded ? "auto" : "";
+      return;
+    }
+
+    clipElement.classList.toggle("is-collapsed", !expanded);
+    if (prefersReducedMotion()) {
+      clipElement.classList.remove("is-height-animated");
+      clipElement.style.height = expanded ? "auto" : collapsedHeight + "px";
+      return;
+    }
+
+    var currentHeight = clipElement.getBoundingClientRect().height;
+    clipElement.classList.remove("is-height-animated");
+    clipElement.style.height = currentHeight + "px";
+    void clipElement.offsetHeight;
+
+    tagCountsHeightToken += 1;
+    var animationToken = String(tagCountsHeightToken);
+    clipElement.setAttribute("data-height-token", animationToken);
+    clipElement.classList.add("is-height-animated");
+    clipElement.style.height = (expanded ? clipElement.scrollHeight : collapsedHeight) + "px";
+
+    function onTransitionEnd(event) {
+      if (event.target !== clipElement || event.propertyName !== "height") {
+        return;
+      }
+      clipElement.removeEventListener("transitionend", onTransitionEnd);
+      finishTagCountsHeight(clipElement, animationToken, expanded);
+    }
+
+    clipElement.addEventListener("transitionend", onTransitionEnd);
+    window.setTimeout(function () {
+      clipElement.removeEventListener("transitionend", onTransitionEnd);
+      finishTagCountsHeight(clipElement, animationToken, expanded);
+    }, 400);
+  }
+
+  function createTagCountsChevron() {
+    var chevron = createElement("span", "tag-counts-toggle-chevron");
+    chevron.setAttribute("aria-hidden", "true");
+    var icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("class", "tag-counts-toggle-icon");
+    icon.setAttribute("viewBox", "0 0 12 12");
+    icon.setAttribute("width", "12");
+    icon.setAttribute("height", "12");
+    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M2.5 4.25 6 7.75l3.5-3.5");
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "1.25");
+    icon.appendChild(path);
+    chevron.appendChild(icon);
+    return chevron;
+  }
+
+  function renderTagCountsToggle(frameElement, clipElement) {
+    var toggleSlot = createElement("div", "tag-counts-toggle-slot");
+    var toggleButton = createElement("button", "text-link tag-counts-toggle attention-pulse");
+    toggleButton.type = "button";
+    toggleButton.setAttribute("aria-expanded", "false");
+    toggleButton.setAttribute("aria-controls", clipElement.id);
+    var toggleLabel = createElement("span", "tag-counts-toggle-label");
+    toggleLabel.textContent = seeMoreLabel;
+    toggleButton.appendChild(toggleLabel);
+    toggleButton.appendChild(createTagCountsChevron());
+    toggleButton.addEventListener("click", function () {
+      var expanded = toggleButton.getAttribute("aria-expanded") !== "true";
+      toggleButton.setAttribute("aria-expanded", expanded ? "true" : "false");
+      toggleLabel.textContent = expanded ? seeLessLabel : seeMoreLabel;
+      toggleButton.classList.toggle("attention-pulse", !expanded);
+      clipElement.setAttribute("data-expanded", expanded ? "true" : "false");
+      syncTagCountsClipAccessibility(clipElement, expanded);
+      playTagCountsHeight(clipElement, expanded);
+    });
+    toggleSlot.appendChild(toggleButton);
+    frameElement.appendChild(toggleSlot);
+  }
+
+  function renderTagCountsSection(parentElement, countSummary) {
+    appendHeading(parentElement, "Tag counts");
+    var summaryLine = createElement("p", "summary-line");
+    summaryLine.textContent = formatTagCountSummary(countSummary);
+    parentElement.appendChild(summaryLine);
+
+    if (countSummary.tagCounts.length <= collapsedTagRowCount) {
+      renderTagCountTable(parentElement, countSummary);
+      renderLabelGroupTable(parentElement, countSummary);
+      return;
+    }
+
+    var frameElement = createElement("div", "tag-counts-frame");
+    var clipElement = createElement("div", "tag-counts-clip is-collapsed");
+    clipElement.id = "tag-counts-list";
+    clipElement.setAttribute("data-expanded", "false");
+    renderTagCountTable(clipElement, countSummary);
+    renderLabelGroupTable(clipElement, countSummary);
+    frameElement.appendChild(clipElement);
+    renderTagCountsToggle(frameElement, clipElement);
+    parentElement.appendChild(frameElement);
+    syncTagCountsClipAccessibility(clipElement, false);
+    scheduleCollapsedTagCountsHeight(clipElement);
+    bindTagCountsResize(clipElement);
+    if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === "function") {
+      document.fonts.ready.then(function () {
+        applyCollapsedTagCountsHeight(clipElement);
+      });
+    }
+  }
 
   function clearTimelineAxisLayoutWatcher() {
     if (cancelTimelineAxisWatch) {
@@ -497,10 +715,10 @@
 
   function renderVisualization(parentElement, analysisDocument, visualizationOptions) {
     clearTimelineAxisLayoutWatcher();
+    detachTagCountsResize();
     parentElement.textContent = "";
     var countSummary = xmlViz.countTags(analysisDocument);
-    renderTagCountTable(parentElement, countSummary);
-    renderLabelGroupTable(parentElement, countSummary);
+    renderTagCountsSection(parentElement, countSummary);
     renderTagTimeline(parentElement, analysisDocument, visualizationOptions && visualizationOptions.tagSelection);
   }
 

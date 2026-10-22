@@ -776,3 +776,109 @@ input[type="checkbox"] {
     animation: none;
   }
 }
+
+/* Tag counts disclosure. One clip through tag rows and any group heading in the list. */
+.tag-counts-frame {
+  position: relative;
+}
+
+.tag-counts-clip {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tag-counts-clip.is-height-animated {
+  transition: height 300ms var(--ease-out-strong);
+}
+
+.tag-counts-clip::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  height: 2rem;
+  background: linear-gradient(to bottom, hsl(var(--background) / 0), hsl(var(--background)));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms var(--ease-out-strong);
+}
+
+.tag-counts-clip.is-collapsed::after {
+  opacity: 1;
+}
+
+.tag-count-table,
+.label-group-table {
+  max-width: 100%;
+  table-layout: fixed;
+}
+
+.tag-count-table th:nth-child(2),
+.tag-count-table td:nth-child(2),
+.tag-count-table th:nth-child(3),
+.tag-count-table td:nth-child(3),
+.label-group-table th:nth-child(3),
+.label-group-table td:nth-child(3) {
+  width: 6rem;
+}
+
+.tag-count-table td:first-child,
+.label-group-table td:first-child,
+.label-group-table td:nth-child(2) {
+  overflow-wrap: anywhere;
+}
+
+.tag-count-table th,
+.label-group-table th {
+  white-space: nowrap;
+}
+
+.tag-count-table td:last-child,
+.label-group-table td:last-child {
+  font-variant-numeric: tabular-nums;
+}
+
+.tag-counts-toggle-slot {
+  display: flex;
+  position: relative;
+  z-index: 2;
+  justify-content: center;
+  margin-top: -0.675rem;
+}
+
+.tag-counts-toggle {
+  gap: 0.35rem;
+  padding: 0 0.25rem;
+  background: hsl(var(--background));
+  font-size: 0.875rem;
+  line-height: 1.35rem;
+  white-space: nowrap;
+}
+
+.tag-counts-toggle-chevron {
+  display: inline-flex;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.tag-counts-toggle-icon {
+  display: block;
+  width: 0.75rem;
+  height: 0.75rem;
+  transition: transform 300ms var(--ease-out-strong);
+}
+
+.tag-counts-toggle[aria-expanded="true"] .tag-counts-toggle-icon {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tag-counts-clip.is-height-animated,
+  .tag-counts-clip::after,
+  .tag-counts-toggle-icon {
+    transition: none;
+  }
+}
