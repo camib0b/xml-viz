@@ -97,7 +97,8 @@
     formElement,
     metadataDescription,
     exportDraft,
-    onDraftChange
+    onDraftChange,
+    callbacks
   ) {
     appendHeading(formElement, "File metadata");
     if (metadataDescription.fileMetadataBlocks.length === 0) {
@@ -122,6 +123,9 @@
           metadataBlock.fileMetadataSlotIndex,
           includeCheckbox.checked
         );
+        if (callbacks && callbacks.onMetadataChange) {
+          callbacks.onMetadataChange("file", includeCheckbox.checked ? 1 : 0);
+        }
         onDraftChange();
       });
       includeLabel.appendChild(includeCheckbox);
@@ -143,7 +147,8 @@
     formElement,
     metadataDescription,
     exportDraft,
-    onDraftChange
+    onDraftChange,
+    callbacks
   ) {
     appendHeading(formElement, "Instance metadata");
     if (metadataDescription.instanceMetadataTypes.length === 0) {
@@ -168,6 +173,9 @@
           metadataType.elementName,
           includeCheckbox.checked
         );
+        if (callbacks && callbacks.onMetadataChange) {
+          callbacks.onMetadataChange("instance", includeCheckbox.checked ? 1 : 0);
+        }
         onDraftChange();
       });
       includeLabel.appendChild(includeCheckbox);
@@ -257,8 +265,14 @@
       formElement.appendChild(renameRow);
     });
 
-    renderFileMetadataSection(formElement, metadataDescription, exportDraft, onDraftChange);
-    renderInstanceMetadataSection(formElement, metadataDescription, exportDraft, onDraftChange);
+    renderFileMetadataSection(formElement, metadataDescription, exportDraft, onDraftChange, callbacks);
+    renderInstanceMetadataSection(
+      formElement,
+      metadataDescription,
+      exportDraft,
+      onDraftChange,
+      callbacks
+    );
 
     appendHeading(formElement, "Export preview");
     formElement.appendChild(previewRoot);
@@ -272,6 +286,9 @@
       if (validationMessage) {
         renameErrorElement.textContent = validationMessage;
         renameErrorElement.hidden = false;
+        if (callbacks.onExportBlocked) {
+          callbacks.onExportBlocked(xmlViz.exportValidationCode(validationMessage));
+        }
         return;
       }
       callbacks.onExport(exportDraft);
