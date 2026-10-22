@@ -695,3 +695,45 @@ input[type="checkbox"] {
     transform: none;
   }
 }
+
+/* Sample-match attention. Hero contribution green-teal, contrib-q4. */
+@keyframes sample-match-attention-pulse {
+  0%,
+  100% {
+    color: hsl(var(--muted-foreground));
+  }
+
+  50% {
+    color: hsl(172 56% 38%);
+  }
+}
+
+@keyframes sample-match-attention-pulse-dark {
+  0%,
+  100% {
+    color: hsl(var(--muted-foreground));
+  }
+
+  50% {
+    color: hsl(172 56% 52%);
+  }
+}
+
+.sample-match-button.is-sample-attention {
+  animation-name: sample-match-attention-pulse;
+  animation-duration: 1.2s;
+  animation-timing-function: ease-in-out;
+  animation-delay: 600ms;
+  animation-iteration-count: 3;
+  animation-fill-mode: none;
+}
+
+.dark .sample-match-button.is-sample-attention {
+  animation-name: sample-match-attention-pulse-dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sample-match-button.is-sample-attention {
+    animation: none;
+  }
+}

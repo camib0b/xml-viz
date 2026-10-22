@@ -5,6 +5,9 @@
   var SAMPLE_ANALYSIS_FILE_URL = "sample/england-vs-china-junior-world-cup-2025-12-02.xml";
   var SAMPLE_ANALYSIS_FILE_NAME = "england-vs-china-junior-world-cup-2025-12-02.xml";
   var SAMPLE_LANDING_DURATION_MS = 400;
+  var SAMPLE_MATCH_ATTENTION_CLASS = "is-sample-attention";
+  var SAMPLE_MATCH_ATTENTION_ANIMATION = "sample-match-attention-pulse";
+  var SAMPLE_MATCH_ATTENTION_ANIMATION_DARK = "sample-match-attention-pulse-dark";
 
   function showErrorMessage(errorElement, message) {
     errorElement.textContent = message;
@@ -165,6 +168,67 @@
     };
   }
 
+  function bindSampleMatchAttention(sampleMatchButton, fileInput) {
+    if (!sampleMatchButton) {
+      return;
+    }
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    var attentionStopped = false;
+
+    function removeSampleMatchAttentionListeners() {
+      document.removeEventListener("click", stopSampleMatchAttention, true);
+      document.removeEventListener("dragenter", stopSampleMatchAttention, true);
+      sampleMatchButton.removeEventListener("animationend", finishSampleMatchAttention);
+      if (fileInput) {
+        fileInput.removeEventListener("change", stopSampleMatchAttentionOnFileChosen);
+      }
+    }
+
+    function stopSampleMatchAttention() {
+      if (attentionStopped) {
+        return;
+      }
+      attentionStopped = true;
+      sampleMatchButton.classList.remove(SAMPLE_MATCH_ATTENTION_CLASS);
+      sampleMatchButton.style.transition = "none";
+      void sampleMatchButton.offsetWidth;
+      sampleMatchButton.style.transition = "";
+      removeSampleMatchAttentionListeners();
+    }
+
+    function stopSampleMatchAttentionOnFileChosen() {
+      var selectedFile = fileInput.files && fileInput.files[0];
+      if (!selectedFile) {
+        return;
+      }
+      stopSampleMatchAttention();
+    }
+
+    function finishSampleMatchAttention(event) {
+      if (!event) {
+        return;
+      }
+      if (
+        event.animationName !== SAMPLE_MATCH_ATTENTION_ANIMATION &&
+        event.animationName !== SAMPLE_MATCH_ATTENTION_ANIMATION_DARK
+      ) {
+        return;
+      }
+      stopSampleMatchAttention();
+    }
+
+    sampleMatchButton.classList.add(SAMPLE_MATCH_ATTENTION_CLASS);
+    document.addEventListener("click", stopSampleMatchAttention, true);
+    document.addEventListener("dragenter", stopSampleMatchAttention, true);
+    sampleMatchButton.addEventListener("animationend", finishSampleMatchAttention);
+    if (fileInput) {
+      fileInput.addEventListener("change", stopSampleMatchAttentionOnFileChosen);
+    }
+  }
+
   function applySharedControlClasses(rootElement) {
     if (!rootElement) {
       return;
@@ -199,6 +263,7 @@
     var clearFileButton = document.getElementById("clear-file-button");
     bindThemeToggle(themeToggle);
     bindAnalysisFileDrop(fileInput, dropZone);
+    bindSampleMatchAttention(sampleMatchButton, fileInput);
     var currentAnalysisDocument = null;
     var currentSourceFileName = "";
     var currentSourceFileBytes = 0;
