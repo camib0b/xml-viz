@@ -2,6 +2,8 @@
   "use strict";
 
   var xmlViz = global.xmlViz;
+  var SAMPLE_ANALYSIS_FILE_URL = "sample/england-vs-china-junior-world-cup-2025-12-02.xml";
+  var SAMPLE_ANALYSIS_FILE_NAME = "england-vs-china-junior-world-cup-2025-12-02.xml";
 
   function showErrorMessage(errorElement, message) {
     errorElement.textContent = message;
@@ -295,67 +297,114 @@
       scrollPageToTop();
     }
 
+    function reportAnalysisLoadFailure(error, fileBytes, usageAction, startedAt) {
+      var errorCode = "failed";
+      try {
+        errorCode = xmlViz.usageErrorCode(error, "parse");
+        if (currentAnalysisDocument) {
+          if (currentView === "exportPrepare") {
+            renderExportPrepareView();
+          } else {
+            renderOverviewView();
+          }
+        }
+        showErrorMessage(
+          errorElement,
+          error && error.message ? error.message : "Failed to load the XML file."
+        );
+      } finally {
+        reportUsageEvent({
+          action: usageAction,
+          outcome: "error",
+          errorCode: errorCode,
+          fileBytes: fileBytes,
+          tagCount: 0,
+          instanceCount: 0,
+          exportedCount: 0,
+          durationMs: xmlViz.elapsedUsageMilliseconds(startedAt),
+        });
+      }
+    }
+
+    function acceptAnalysisText(fileName, xmlText, fileBytes, usageAction, startedAt) {
+      var analysisDocument = xmlViz.readAnalysisFile(xmlText);
+      currentAnalysisDocument = analysisDocument;
+      currentSourceFileName = fileName;
+      currentSourceFileBytes = fileBytes;
+      selectedTagCodes = [];
+      renderOverviewView();
+      var counts = documentCounts(analysisDocument);
+      reportUsageEvent({
+        action: usageAction,
+        outcome: "success",
+        errorCode: "",
+        fileBytes: fileBytes,
+        tagCount: counts.tagCount,
+        instanceCount: counts.instanceCount,
+        exportedCount: 0,
+        durationMs: xmlViz.elapsedUsageMilliseconds(startedAt),
+      });
+    }
+
+    function prepareAnalysisLoad(fileName) {
+      fileNameDisplay.textContent = fileName;
+      clearErrorMessage(errorElement);
+      clearExportStatus();
+      return xmlViz.markUsageTime();
+    }
+
     fileInput.addEventListener("change", function () {
       var selectedFile = fileInput.files && fileInput.files[0];
       if (!selectedFile) {
         return;
       }
 
-      fileNameDisplay.textContent = selectedFile.name;
-      clearErrorMessage(errorElement);
-      clearExportStatus();
-      var startedAt = xmlViz.markUsageTime();
+      var startedAt = prepareAnalysisLoad(selectedFile.name);
       var fileBytes = typeof selectedFile.size === "number" ? selectedFile.size : 0;
 
       readFileAsText(selectedFile)
         .then(function (xmlText) {
-          var analysisDocument = xmlViz.readAnalysisFile(xmlText);
-          currentAnalysisDocument = analysisDocument;
-          currentSourceFileName = selectedFile.name;
-          currentSourceFileBytes = fileBytes;
-          selectedTagCodes = [];
-          renderOverviewView();
-          var counts = documentCounts(analysisDocument);
-          reportUsageEvent({
-            action: "parse",
-            outcome: "success",
-            errorCode: "",
-            fileBytes: fileBytes,
-            tagCount: counts.tagCount,
-            instanceCount: counts.instanceCount,
-            exportedCount: 0,
-            durationMs: xmlViz.elapsedUsageMilliseconds(startedAt),
-          });
+          acceptAnalysisText(selectedFile.name, xmlText, fileBytes, "parse", startedAt);
         })
         .catch(function (error) {
-          var errorCode = "failed";
-          try {
-            errorCode = xmlViz.usageErrorCode(error, "parse");
-            if (currentAnalysisDocument) {
-              if (currentView === "exportPrepare") {
-                renderExportPrepareView();
-              } else {
-                renderOverviewView();
-              }
-            }
-            showErrorMessage(
-              errorElement,
-              error && error.message ? error.message : "Failed to load the XML file."
-            );
-          } finally {
-            reportUsageEvent({
-              action: "parse",
-              outcome: "error",
-              errorCode: errorCode,
-              fileBytes: fileBytes,
-              tagCount: 0,
-              instanceCount: 0,
-              exportedCount: 0,
-              durationMs: xmlViz.elapsedUsageMilliseconds(startedAt),
-            });
-          }
+          reportAnalysisLoadFailure(error, fileBytes, "parse", startedAt);
         });
     });
+
+    var sampleMatchButton = document.getElementById("sample-match-button");
+    if (sampleMatchButton) {
+      sampleMatchButton.addEventListener("click", function () {
+        var startedAt = prepareAnalysisLoad(SAMPLE_ANALYSIS_FILE_NAME);
+        var fileBytes = 0;
+        if (fileInput) {
+          fileInput.value = "";
+        }
+
+        fetch(SAMPLE_ANALYSIS_FILE_URL)
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error("Could not read the selected file.");
+            }
+            return response.blob();
+          })
+          .then(function (blob) {
+            fileBytes = typeof blob.size === "number" ? blob.size : 0;
+            return readFileAsText(blob);
+          })
+          .then(function (xmlText) {
+            acceptAnalysisText(
+              SAMPLE_ANALYSIS_FILE_NAME,
+              xmlText,
+              fileBytes,
+              "sample",
+              startedAt
+            );
+          })
+          .catch(function (error) {
+            reportAnalysisLoadFailure(error, fileBytes, "sample", startedAt);
+          });
+      });
+    }
   }
 
   if (document.readyState === "loading") {
