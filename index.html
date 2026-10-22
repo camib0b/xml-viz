@@ -82,10 +82,24 @@
               type="file"
               accept=".xml,application/xml,text/xml"
             />
-            <span class="file-drop-text">Drop an analysis XML file here, or choose a file.</span>
-            <span class="file-choose-button">Choose file</span>
+            <span class="file-drop-prompt-motion">
+              <span class="file-drop-clip">
+                <span class="file-drop-prompt" id="file-drop-prompt">
+                  <span class="file-drop-text">Drop an analysis XML file here, or choose a file.</span>
+                  <span class="file-choose-button">Choose file</span>
+                </span>
+              </span>
+            </span>
+            <span class="file-chosen-motion">
+              <span class="file-drop-clip">
+                <span class="file-chosen-label" id="file-chosen-label" aria-hidden="true">
+                  <span class="file-format-note">XML</span>
+                  <span id="selected-file-name" class="selected-file-name"></span>
+                </span>
+              </span>
+            </span>
           </label>
-          <div class="sample-match">
+          <div class="sample-match" id="sample-match">
             <button
               type="button"
               class="sample-match-button"
@@ -98,8 +112,6 @@
               England vs China, Junior World Cup, 2 Dec 2025
             </p>
           </div>
-          <p class="file-format-note">XML</p>
-          <p id="selected-file-name" class="selected-file-name">No file selected</p>
           <p id="read-error-message" class="read-error-message" hidden role="alert"></p>
           <p id="export-status-message" class="export-status-message" hidden></p>
         </section>

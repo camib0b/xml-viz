@@ -4,6 +4,7 @@
   var xmlViz = global.xmlViz;
   var SAMPLE_ANALYSIS_FILE_URL = "sample/england-vs-china-junior-world-cup-2025-12-02.xml";
   var SAMPLE_ANALYSIS_FILE_NAME = "england-vs-china-junior-world-cup-2025-12-02.xml";
+  var SAMPLE_LANDING_DURATION_MS = 400;
 
   function showErrorMessage(errorElement, message) {
     errorElement.textContent = message;
@@ -155,6 +156,11 @@
     var visualizationRoot = document.getElementById("visualization-root");
     var themeToggle = document.getElementById("theme-toggle");
     var dropZone = document.querySelector(".file-drop-zone");
+    var fileSection = document.querySelector(".file-input-section");
+    var fileDropPrompt = document.getElementById("file-drop-prompt");
+    var fileChosenLabel = document.getElementById("file-chosen-label");
+    var sampleMatch = document.getElementById("sample-match");
+    var sampleMatchButton = document.getElementById("sample-match-button");
     bindThemeToggle(themeToggle);
     bindAnalysisFileDrop(fileInput, dropZone);
     var currentAnalysisDocument = null;
@@ -163,6 +169,18 @@
     var selectedTagCodes = [];
     var exportDraft = null;
     var currentView = "overview";
+    var analysisLoadGeneration = 0;
+    var chosenFileCommitted = false;
+    var sampleLandingChip = null;
+    var sampleLandingSettled = false;
+    var landingFallbackTimer = 0;
+
+    function prefersReducedMotion() {
+      return Boolean(
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      );
+    }
 
     function scrollPrepareExportHeaderIntoView() {
       var sectionHeading = visualizationRoot.querySelector(
@@ -171,12 +189,9 @@
       if (!sectionHeading) {
         return;
       }
-      var prefersReducedMotion =
-        window.matchMedia &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       sectionHeading.scrollIntoView({
         block: "start",
-        behavior: prefersReducedMotion ? "auto" : "smooth",
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
       });
     }
 
@@ -338,12 +353,178 @@
       }
     }
 
+    function beginAnalysisLoad() {
+      analysisLoadGeneration += 1;
+      return analysisLoadGeneration;
+    }
+
+    function isCurrentAnalysisLoad(loadGeneration) {
+      return loadGeneration === analysisLoadGeneration;
+    }
+
+    function removeSampleLandingChip() {
+      if (landingFallbackTimer) {
+        window.clearTimeout(landingFallbackTimer);
+        landingFallbackTimer = 0;
+      }
+      if (sampleLandingChip && sampleLandingChip.parentNode) {
+        sampleLandingChip.parentNode.removeChild(sampleLandingChip);
+      }
+      sampleLandingChip = null;
+    }
+
+    function cancelSampleLanding() {
+      removeSampleLandingChip();
+      sampleLandingSettled = false;
+      if (dropZone) {
+        dropZone.classList.remove("is-sample-landing");
+      }
+    }
+
+    function revealChosenFileLabel() {
+      if (!chosenFileCommitted || !dropZone) {
+        return;
+      }
+      if (sampleLandingChip && !sampleLandingSettled) {
+        return;
+      }
+      dropZone.classList.add("is-label-visible");
+      removeSampleLandingChip();
+      dropZone.classList.remove("is-sample-landing");
+    }
+
+    function commitChosenFile(fileName) {
+      fileNameDisplay.textContent = fileName;
+      fileNameDisplay.title = fileName;
+      chosenFileCommitted = true;
+      if (sampleMatch) {
+        sampleMatch.hidden = true;
+      }
+      if (fileDropPrompt) {
+        fileDropPrompt.setAttribute("aria-hidden", "true");
+      }
+      if (fileChosenLabel) {
+        fileChosenLabel.setAttribute("aria-hidden", "false");
+      }
+      if (!dropZone) {
+        return;
+      }
+      dropZone.classList.add("is-chosen");
+      if (sampleLandingChip) {
+        dropZone.classList.add("is-sample-landing");
+      }
+      revealChosenFileLabel();
+    }
+
+    function measureChosenLabelRect(fileName) {
+      fileNameDisplay.textContent = fileName;
+      if (!dropZone || !fileChosenLabel) {
+        return null;
+      }
+      dropZone.classList.add("is-motion-frozen", "is-chosen");
+      var labelRect = fileChosenLabel.getBoundingClientRect();
+      dropZone.classList.remove("is-chosen");
+      void dropZone.offsetWidth;
+      dropZone.classList.remove("is-motion-frozen");
+      return labelRect;
+    }
+
+    function buildSampleLandingChip(fileName, chipWidth) {
+      var chip = document.createElement("span");
+      chip.className = "sample-file-chip";
+      chip.setAttribute("aria-hidden", "true");
+      var formatNote = document.createElement("span");
+      formatNote.className = "file-format-note";
+      formatNote.textContent = "XML";
+      var fileNameText = document.createElement("span");
+      fileNameText.className = "selected-file-name";
+      fileNameText.textContent = fileName;
+      chip.appendChild(formatNote);
+      chip.appendChild(fileNameText);
+      if (chipWidth > 0) {
+        chip.style.width = chipWidth + "px";
+      }
+      return chip;
+    }
+
+    function playSampleLanding(fileName) {
+      cancelSampleLanding();
+      if (
+        prefersReducedMotion() ||
+        !sampleMatchButton ||
+        !dropZone ||
+        !fileSection ||
+        !fileChosenLabel
+      ) {
+        sampleLandingSettled = true;
+        return;
+      }
+
+      var labelRect = measureChosenLabelRect(fileName);
+      var buttonRect = sampleMatchButton.getBoundingClientRect();
+      var sectionRect = fileSection.getBoundingClientRect();
+      if (!labelRect || !buttonRect.width || !sectionRect.width) {
+        sampleLandingSettled = true;
+        return;
+      }
+
+      var chip = buildSampleLandingChip(fileName, labelRect.width);
+      fileSection.appendChild(chip);
+      var startLeft = buttonRect.left - sectionRect.left;
+      var startTop =
+        buttonRect.top -
+        sectionRect.top +
+        (buttonRect.height - chip.offsetHeight) / 2;
+      chip.style.left = startLeft + "px";
+      chip.style.top = startTop + "px";
+      sampleLandingChip = chip;
+
+      var translateX = labelRect.left - sectionRect.left - startLeft;
+      var translateY = labelRect.top - sectionRect.top - startTop;
+      var landingSettled = false;
+
+      function finishSampleLanding(event) {
+        if (landingSettled) {
+          return;
+        }
+        if (event && (event.target !== chip || event.propertyName !== "transform")) {
+          return;
+        }
+        landingSettled = true;
+        chip.removeEventListener("transitionend", finishSampleLanding);
+        if (landingFallbackTimer) {
+          window.clearTimeout(landingFallbackTimer);
+          landingFallbackTimer = 0;
+        }
+        if (sampleLandingChip === chip) {
+          sampleLandingSettled = true;
+        }
+        revealChosenFileLabel();
+      }
+
+      chip.addEventListener("transitionend", finishSampleLanding);
+      landingFallbackTimer = window.setTimeout(function () {
+        finishSampleLanding();
+      }, SAMPLE_LANDING_DURATION_MS + 80);
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(function () {
+          if (sampleLandingChip !== chip) {
+            return;
+          }
+          chip.style.setProperty("--chip-translate-x", translateX + "px");
+          chip.style.setProperty("--chip-translate-y", translateY + "px");
+          chip.classList.add("is-landing");
+        });
+      });
+    }
+
     function acceptAnalysisText(fileName, xmlText, fileBytes, usageAction, startedAt) {
       var analysisDocument = xmlViz.readAnalysisFile(xmlText);
       currentAnalysisDocument = analysisDocument;
       currentSourceFileName = fileName;
       currentSourceFileBytes = fileBytes;
       selectedTagCodes = [];
+      commitChosenFile(fileName);
       renderOverviewView();
       var counts = documentCounts(analysisDocument);
       reportUsageEvent({
@@ -358,8 +539,7 @@
       });
     }
 
-    function prepareAnalysisLoad(fileName) {
-      fileNameDisplay.textContent = fileName;
+    function prepareAnalysisLoad() {
       clearErrorMessage(errorElement);
       clearExportStatus();
       return xmlViz.markUsageTime();
@@ -371,26 +551,36 @@
         return;
       }
 
-      var startedAt = prepareAnalysisLoad(selectedFile.name);
+      cancelSampleLanding();
+      var loadGeneration = beginAnalysisLoad();
+      var startedAt = prepareAnalysisLoad();
       var fileBytes = typeof selectedFile.size === "number" ? selectedFile.size : 0;
 
       readFileAsText(selectedFile)
         .then(function (xmlText) {
+          if (!isCurrentAnalysisLoad(loadGeneration)) {
+            return;
+          }
           acceptAnalysisText(selectedFile.name, xmlText, fileBytes, "parse", startedAt);
         })
         .catch(function (error) {
+          if (!isCurrentAnalysisLoad(loadGeneration)) {
+            return;
+          }
+          cancelSampleLanding();
           reportAnalysisLoadFailure(error, fileBytes, "parse", startedAt);
         });
     });
 
-    var sampleMatchButton = document.getElementById("sample-match-button");
     if (sampleMatchButton) {
       sampleMatchButton.addEventListener("click", function () {
-        var startedAt = prepareAnalysisLoad(SAMPLE_ANALYSIS_FILE_NAME);
+        var loadGeneration = beginAnalysisLoad();
+        var startedAt = prepareAnalysisLoad();
         var fileBytes = 0;
         if (fileInput) {
           fileInput.value = "";
         }
+        playSampleLanding(SAMPLE_ANALYSIS_FILE_NAME);
 
         fetch(SAMPLE_ANALYSIS_FILE_URL)
           .then(function (response) {
@@ -404,6 +594,9 @@
             return readFileAsText(blob);
           })
           .then(function (xmlText) {
+            if (!isCurrentAnalysisLoad(loadGeneration)) {
+              return;
+            }
             acceptAnalysisText(
               SAMPLE_ANALYSIS_FILE_NAME,
               xmlText,
@@ -413,6 +606,10 @@
             );
           })
           .catch(function (error) {
+            if (!isCurrentAnalysisLoad(loadGeneration)) {
+              return;
+            }
+            cancelSampleLanding();
             reportAnalysisLoadFailure(error, fileBytes, "sample", startedAt);
           });
       });
