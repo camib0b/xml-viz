@@ -50,12 +50,111 @@
     URL.revokeObjectURL(objectUrl);
   }
 
+  function readStoredTheme() {
+    try {
+      return localStorage.getItem("theme");
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeStoredTheme(theme) {
+    try {
+      localStorage.setItem("theme", theme);
+    } catch (error) {
+      // The document class still carries the choice for this view.
+    }
+  }
+
+  function syncThemeToggle(themeToggle) {
+    if (!themeToggle) {
+      return;
+    }
+    var isDark = document.documentElement.classList.contains("dark");
+    themeToggle.setAttribute(
+      "aria-label",
+      isDark ? "Switch to light theme" : "Switch to dark theme"
+    );
+  }
+
+  function bindThemeToggle(themeToggle) {
+    if (!themeToggle) {
+      return;
+    }
+    syncThemeToggle(themeToggle);
+    themeToggle.addEventListener("click", function () {
+      var nextTheme = document.documentElement.classList.contains("dark") ? "light" : "dark";
+      document.documentElement.classList.toggle("dark", nextTheme === "dark");
+      writeStoredTheme(nextTheme);
+      syncThemeToggle(themeToggle);
+    });
+
+    var storedTheme = readStoredTheme();
+    if (storedTheme === "light" || storedTheme === "dark" || !window.matchMedia) {
+      return;
+    }
+    var themeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    var applySystemTheme = function (event) {
+      document.documentElement.classList.toggle("dark", event.matches);
+      syncThemeToggle(themeToggle);
+    };
+    if (themeQuery.addEventListener) {
+      themeQuery.addEventListener("change", applySystemTheme);
+    }
+  }
+
+  function bindAnalysisFileDrop(fileInput, dropZone) {
+    if (!fileInput || !dropZone) {
+      return;
+    }
+    var dragDepth = 0;
+
+    dropZone.addEventListener("dragenter", function (event) {
+      event.preventDefault();
+      dragDepth += 1;
+      dropZone.classList.add("is-dragging");
+    });
+
+    dropZone.addEventListener("dragover", function (event) {
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "copy";
+      }
+    });
+
+    dropZone.addEventListener("dragleave", function () {
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) {
+        dropZone.classList.remove("is-dragging");
+      }
+    });
+
+    dropZone.addEventListener("drop", function (event) {
+      event.preventDefault();
+      dragDepth = 0;
+      dropZone.classList.remove("is-dragging");
+      var droppedFiles = event.dataTransfer && event.dataTransfer.files;
+      var droppedFile = droppedFiles && droppedFiles[0];
+      if (!droppedFile || typeof DataTransfer !== "function") {
+        return;
+      }
+      var transfer = new DataTransfer();
+      transfer.items.add(droppedFile);
+      fileInput.files = transfer.files;
+      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
+
   function startApplication() {
     var fileInput = document.getElementById("analysis-file-input");
     var fileNameDisplay = document.getElementById("selected-file-name");
     var errorElement = document.getElementById("read-error-message");
     var exportStatusElement = document.getElementById("export-status-message");
     var visualizationRoot = document.getElementById("visualization-root");
+    var themeToggle = document.getElementById("theme-toggle");
+    var dropZone = document.querySelector(".file-drop-zone");
+    bindThemeToggle(themeToggle);
+    bindAnalysisFileDrop(fileInput, dropZone);
     var currentAnalysisDocument = null;
     var currentSourceFileName = "";
     var selectedTagCodes = [];
