@@ -3,33 +3,97 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>XML Tag Visualizer</title>
+    <title>XML Tag Visualizer · Camila Escudero</title>
+    <script>
+      (function () {
+        var storedTheme = null;
+        try {
+          storedTheme = localStorage.getItem("theme");
+        } catch (error) {
+          storedTheme = null;
+        }
+        var theme = storedTheme === "light" || storedTheme === "dark"
+          ? storedTheme
+          : window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="pattern pattern-cross" aria-hidden="true"></div>
+    <div class="pattern pattern-noise" aria-hidden="true"></div>
+
     <header class="page-header">
-      <h1>XML Tag Visualizer</h1>
-      <p class="page-intro">
-        Choose an analysis XML file to see tag counts and a timeline. Select tag rows on the timeline to export a subset as a new XML file.
-      </p>
+      <div class="page-header-inner">
+        <a class="back-link" href="https://camilaescudero.cl/">
+          <svg class="back-link-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+            <path d="M7.5 2.25 4 6l3.5 3.75" fill="none" stroke="currentColor" stroke-width="1.25" />
+          </svg>
+          Back
+        </a>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch color theme">
+          <span class="theme-icon-stack">
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="8" r="2.25" fill="none" stroke="currentColor" stroke-width="1.25" />
+              <path
+                d="M8 1.4v1.6M8 13v1.6M1.4 8H3M13 8h1.6M3.15 3.15l1.15 1.15M11.7 11.7l1.15 1.15M3.15 12.85l1.15-1.15M11.7 4.3l1.15-1.15"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.25"
+              />
+            </svg>
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M9.15 1.7a5.35 5.35 0 1 0 5.15 7A4.55 4.55 0 0 1 9.15 1.7Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.25"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
     </header>
 
-    <section class="file-input-section" aria-labelledby="file-input-label">
-      <label id="file-input-label" class="file-input-label" for="analysis-file-input">
-        Analysis XML file
-      </label>
-      <input
-        id="analysis-file-input"
-        class="file-input"
-        type="file"
-        accept=".xml,application/xml,text/xml"
-      />
-      <p id="selected-file-name" class="selected-file-name">No file selected</p>
-      <p id="read-error-message" class="read-error-message" hidden role="alert"></p>
-      <p id="export-status-message" class="export-status-message" hidden></p>
-    </section>
+    <main class="page-main">
+      <div class="page-column">
+        <h1>XML Tag Visualizer</h1>
+        <p class="page-intro">
+          Choose an analysis XML file to see tag counts and a timeline. Select tag rows on the timeline to export a subset as a new XML file.
+        </p>
+        <p class="telemetry-note">An anonymous performance count is sent, with no file names, tag names, or contents.</p>
 
-    <main id="visualization-root" class="visualization-root" aria-live="polite"></main>
+        <section class="file-input-section" aria-labelledby="file-input-label">
+          <label id="file-input-label" class="file-drop-zone">
+            <input
+              id="analysis-file-input"
+              class="file-input"
+              type="file"
+              accept=".xml,application/xml,text/xml"
+            />
+            <span class="file-drop-text">Drop an analysis XML file here, or choose a file.</span>
+            <span class="file-choose-button">Choose file</span>
+          </label>
+          <p class="file-format-note">XML</p>
+          <p id="selected-file-name" class="selected-file-name">No file selected</p>
+          <p id="read-error-message" class="read-error-message" hidden role="alert"></p>
+          <p id="export-status-message" class="export-status-message" hidden></p>
+        </section>
+
+        <div id="visualization-root" class="visualization-root" aria-live="polite"></div>
+      </div>
+    </main>
 
     <script src="src/analysisDocument.js"></script>
     <script src="src/readAnalysisFile.js"></script>
@@ -39,6 +103,7 @@
     <script src="src/buildTagTimeline.js"></script>
     <script src="src/renderVisualization.js"></script>
     <script src="src/renderExportPreparation.js"></script>
+    <script src="src/reportUsageEvent.js"></script>
     <script src="src/startApplication.js"></script>
   </body>
 </html>

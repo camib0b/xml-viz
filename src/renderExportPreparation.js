@@ -272,6 +272,9 @@
       if (validationMessage) {
         renameErrorElement.textContent = validationMessage;
         renameErrorElement.hidden = false;
+        if (callbacks.onExportBlocked) {
+          callbacks.onExportBlocked(xmlViz.exportValidationCode(validationMessage));
+        }
         return;
       }
       callbacks.onExport(exportDraft);
