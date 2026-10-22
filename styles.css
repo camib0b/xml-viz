@@ -1,57 +1,11 @@
 :root {
   color-scheme: light;
-  --radius: 0;
-  --font-body: "Roboto", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-
-  --background: 0 0% 100%;
-  --foreground: 220 14% 10%;
-
-  --card: 220 14% 98%;
-  --primary: 220 14% 28%;
-  --primary-foreground: 0 0% 100%;
-
-  --muted: 220 10% 95%;
-  --muted-foreground: 220 8% 46%;
-
-  --destructive: 0 72% 51%;
-  --border: 220 10% 90%;
-  --input: 220 10% 90%;
-  --ring: 220 14% 28%;
-
-  --shadow-elev-2: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --number-positive: 152 32% 28%;
-
-  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-landing: cubic-bezier(0.16, 1, 0.3, 1);
-  --color-ease: cubic-bezier(0.4, 0, 0.2, 1);
-
-  --inbox-fill: hsl(0 0% 100% / 0.72);
   --row-fill: hsl(0 0% 100% / 0.55);
 }
 
 .dark {
-  color-scheme: dark;
-
-  --background: 220 14% 4%;
-  --foreground: 220 14% 93%;
-
-  --card: 220 14% 7%;
-  --primary: 220 14% 75%;
-  --primary-foreground: 220 14% 4%;
-
-  --muted: 220 8% 14%;
-  --muted-foreground: 220 8% 55%;
-
-  --destructive: 0 62% 40%;
-  --border: 220 8% 18%;
-  --input: 220 8% 16%;
-  --ring: 220 14% 75%;
-
-  --shadow-elev-2: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --number-positive: 152 28% 68%;
-
-  --inbox-fill: hsl(0 0% 100% / 0.06);
   --row-fill: hsl(0 0% 100% / 0.05);
 }
 
@@ -61,12 +15,9 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 html,
 body {
+  height: auto;
   min-height: 100%;
 }
 
@@ -180,76 +131,16 @@ input {
   }
 }
 
-.back-link,
-.theme-toggle,
-.action-button,
-.file-choose-button,
-.sample-match-button,
-.clear-file-button {
-  transition:
-    color 200ms var(--color-ease),
-    background-color 200ms var(--color-ease),
-    border-color 200ms var(--color-ease),
-    box-shadow 200ms var(--color-ease),
-    transform 100ms var(--ease-out-strong),
-    opacity 200ms var(--ease-out-strong);
-}
-
 .back-link {
-  display: inline-flex;
-  align-items: center;
   gap: 0.375rem;
-  color: hsl(var(--muted-foreground));
   font-size: 0.75rem;
   line-height: 1.1rem;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.back-link:hover {
-  color: hsl(var(--foreground));
-}
-
-.back-link:active {
-  transform: scale(0.97);
-}
-
-.back-link:focus-visible,
-.theme-toggle:focus-visible,
-.action-button:focus-visible,
-.sample-match-button:focus-visible,
-.clear-file-button:focus-visible,
-.form-text-input:focus-visible,
-.metadata-field-input:focus-visible {
-  outline: 1px solid hsl(var(--ring));
-  outline-offset: 2px;
 }
 
 .back-link-icon {
   display: block;
   width: 0.75rem;
   height: 0.75rem;
-}
-
-.theme-toggle {
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: hsl(var(--muted-foreground) / 0.9);
-  cursor: pointer;
-}
-
-.theme-toggle:hover {
-  color: hsl(var(--foreground));
-  background: hsl(var(--muted) / 0.3);
-}
-
-.theme-toggle:active {
-  transform: scale(0.97);
 }
 
 .theme-icon-stack {
@@ -310,18 +201,11 @@ html:not(.dark) .theme-icon-moon {
 }
 
 .file-drop-zone {
-  position: relative;
-  display: flex;
-  flex-direction: column;
   align-items: stretch;
-  border: 1px solid hsl(var(--border));
-  background: var(--inbox-fill);
-  padding: 2rem 1rem;
-  text-align: center;
-  cursor: pointer;
   transition:
     padding 400ms var(--ease-landing),
-    background-color 400ms var(--ease-landing);
+    background-color 400ms var(--ease-landing),
+    border-color var(--duration-button) var(--color-ease);
 }
 
 .file-drop-zone.is-chosen {
@@ -338,7 +222,7 @@ html:not(.dark) .theme-icon-moon {
 }
 
 .file-drop-zone.is-chosen .file-chosen-motion .file-drop-clip {
-  padding-right: 2.25rem;
+  padding-right: 2.5rem;
 }
 
 .clear-file-button {
@@ -347,25 +231,8 @@ html:not(.dark) .theme-icon-moon {
   top: 0;
   bottom: 0;
   z-index: 2;
-  display: inline-grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
   margin-top: auto;
   margin-bottom: auto;
-  padding: 0;
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-  cursor: pointer;
-}
-
-.clear-file-button:hover {
-  border-color: hsl(var(--foreground));
-}
-
-.clear-file-button:active {
-  transform: scale(0.97);
 }
 
 .clear-file-icon {
@@ -380,27 +247,6 @@ html:not(.dark) .theme-icon-moon {
 .file-drop-zone.is-motion-frozen .file-drop-prompt,
 .file-drop-zone.is-motion-frozen .file-chosen-label {
   transition: none;
-}
-
-.file-drop-zone.is-dragging {
-  border-color: hsl(var(--foreground));
-}
-
-.file-drop-zone:focus-within {
-  outline: 1px solid hsl(var(--ring));
-  outline-offset: 2px;
-}
-
-.file-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .file-drop-prompt-motion,
@@ -448,27 +294,8 @@ html:not(.dark) .theme-icon-moon {
   line-height: 1.35rem;
 }
 
-.file-choose-button {
-  display: inline-block;
+.file-drop-prompt .button-file {
   margin-top: 1rem;
-  border: 1px solid hsl(var(--border));
-  background: transparent;
-  padding: 0.5rem 1rem;
-  color: hsl(var(--foreground));
-  font-size: 0.75rem;
-  line-height: 1.1rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.file-choose-button:hover {
-  box-shadow: var(--shadow-elev-2);
-  transform: translateY(-2px);
-}
-
-.file-drop-zone:active .file-choose-button {
-  transform: scale(0.97);
 }
 
 .sample-match {
@@ -476,24 +303,9 @@ html:not(.dark) .theme-icon-moon {
 }
 
 .sample-match-button {
-  display: inline-block;
-  margin: 0;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  color: hsl(var(--muted-foreground));
   font-size: 0.75rem;
   line-height: 1.1rem;
   text-align: left;
-  cursor: pointer;
-}
-
-.sample-match-button:hover {
-  color: hsl(var(--foreground));
-}
-
-.sample-match-button:active {
-  transform: scale(0.97);
 }
 
 .sample-match-caption {
@@ -784,41 +596,6 @@ html:not(.dark) .theme-icon-moon {
   margin-bottom: 0.75rem;
 }
 
-.action-button {
-  border: 1px solid hsl(var(--border));
-  background: transparent;
-  padding: 0.5rem 1rem;
-  color: hsl(var(--foreground));
-  font-size: 0.75rem;
-  line-height: 1.1rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.action-button:hover:not(:disabled) {
-  border-color: hsl(var(--foreground));
-}
-
-.action-button:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.action-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.4;
-}
-
-.action-button-primary {
-  border-color: hsl(var(--foreground));
-  background: hsl(var(--foreground));
-  color: hsl(var(--background));
-}
-
-.action-button-primary:hover:not(:disabled) {
-  border-color: hsl(var(--foreground));
-}
-
 .export-preparation-form {
   margin-top: 1rem;
 }
@@ -837,15 +614,8 @@ html:not(.dark) .theme-icon-moon {
 
 .form-text-input,
 .metadata-field-input {
-  width: 100%;
   min-width: 16rem;
   max-width: 24rem;
-  border: 1px solid hsl(var(--input));
-  background: var(--inbox-fill);
-  padding: 0.5rem 0.75rem;
-  color: hsl(var(--foreground));
-  font-size: 0.875rem;
-  line-height: 1.35rem;
 }
 
 .form-inline-label {
@@ -907,34 +677,16 @@ input[type="checkbox"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  .back-link,
-  .theme-toggle,
-  .action-button,
-  .file-choose-button,
-  .sample-match-button,
   .theme-icon,
   .file-drop-zone,
   .file-drop-prompt-motion,
   .file-chosen-motion,
   .file-drop-prompt,
   .file-chosen-label,
-  .sample-file-chip,
-  .clear-file-button {
+  .sample-file-chip {
     transition: none;
   }
 
-  .back-link:active,
-  .theme-toggle:active,
-  .action-button:active,
-  .action-button:active:not(:disabled),
-  .file-choose-button:hover,
-  .file-drop-zone:active .file-choose-button,
-  .sample-match-button:active,
-  .clear-file-button:active,
   .theme-icon,
   html:not(.dark) .theme-icon-sun,
   html:not(.dark) .theme-icon-moon,

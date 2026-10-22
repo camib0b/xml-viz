@@ -108,34 +108,37 @@
 
   function bindAnalysisFileDrop(fileInput, dropZone) {
     if (!fileInput || !dropZone) {
-      return;
+      return function unbindMissingDropZone() {
+        return undefined;
+      };
     }
+
     var dragDepth = 0;
 
-    dropZone.addEventListener("dragenter", function (event) {
+    function handleDragEnter(event) {
       event.preventDefault();
       dragDepth += 1;
-      dropZone.classList.add("is-dragging");
-    });
+      dropZone.classList.add("is-drag-over");
+    }
 
-    dropZone.addEventListener("dragover", function (event) {
+    function handleDragOver(event) {
       event.preventDefault();
       if (event.dataTransfer) {
         event.dataTransfer.dropEffect = "copy";
       }
-    });
+    }
 
-    dropZone.addEventListener("dragleave", function () {
+    function handleDragLeave() {
       dragDepth = Math.max(0, dragDepth - 1);
       if (dragDepth === 0) {
-        dropZone.classList.remove("is-dragging");
+        dropZone.classList.remove("is-drag-over");
       }
-    });
+    }
 
-    dropZone.addEventListener("drop", function (event) {
+    function handleDrop(event) {
       event.preventDefault();
       dragDepth = 0;
-      dropZone.classList.remove("is-dragging");
+      dropZone.classList.remove("is-drag-over");
       var droppedFiles = event.dataTransfer && event.dataTransfer.files;
       var droppedFile = droppedFiles && droppedFiles[0];
       if (!droppedFile || typeof DataTransfer !== "function") {
@@ -145,7 +148,39 @@
       transfer.items.add(droppedFile);
       fileInput.files = transfer.files;
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
-    });
+    }
+
+    dropZone.addEventListener("dragenter", handleDragEnter);
+    dropZone.addEventListener("dragover", handleDragOver);
+    dropZone.addEventListener("dragleave", handleDragLeave);
+    dropZone.addEventListener("drop", handleDrop);
+
+    return function unbindAnalysisFileDrop() {
+      dropZone.removeEventListener("dragenter", handleDragEnter);
+      dropZone.removeEventListener("dragover", handleDragOver);
+      dropZone.removeEventListener("dragleave", handleDragLeave);
+      dropZone.removeEventListener("drop", handleDrop);
+      dragDepth = 0;
+      dropZone.classList.remove("is-drag-over");
+    };
+  }
+
+  function applySharedControlClasses(rootElement) {
+    if (!rootElement) {
+      return;
+    }
+    var actionButtons = rootElement.querySelectorAll(".action-button");
+    for (var buttonIndex = 0; buttonIndex < actionButtons.length; buttonIndex += 1) {
+      var actionButton = actionButtons[buttonIndex];
+      var sharedButtonClass = actionButton.classList.contains("action-button-primary")
+        ? "button-primary"
+        : "button-secondary";
+      actionButton.classList.add(sharedButtonClass);
+    }
+    var textInputs = rootElement.querySelectorAll(".form-text-input, .metadata-field-input");
+    for (var inputIndex = 0; inputIndex < textInputs.length; inputIndex += 1) {
+      textInputs[inputIndex].classList.add("input");
+    }
   }
 
   function startApplication() {
@@ -258,6 +293,7 @@
           },
         },
       });
+      applySharedControlClasses(visualizationRoot);
     }
 
     function renderExportPrepareView() {
@@ -322,6 +358,7 @@
           }
         },
       });
+      applySharedControlClasses(visualizationRoot);
       scrollPrepareExportHeaderIntoView();
     }
 

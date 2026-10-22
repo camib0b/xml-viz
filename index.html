@@ -28,6 +28,7 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap"
     />
+    <link rel="stylesheet" href="src/vendor/ui.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -36,13 +37,13 @@
 
     <header class="page-header">
       <div class="page-header-inner">
-        <a class="back-link" href="https://camilaescudero.cl/">
+        <a class="back-link text-link" href="https://camilaescudero.cl/">
           <svg class="back-link-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
             <path d="M7.5 2.25 4 6l3.5 3.75" fill="none" stroke="currentColor" stroke-width="1.25" />
           </svg>
           Back
         </a>
-        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch color theme">
+        <button type="button" class="theme-toggle button-icon" id="theme-toggle" aria-label="Switch color theme">
           <span class="theme-icon-stack">
             <svg class="theme-icon theme-icon-sun" viewBox="0 0 16 16" aria-hidden="true">
               <circle cx="8" cy="8" r="2.25" fill="none" stroke="currentColor" stroke-width="1.25" />
@@ -75,10 +76,10 @@
         <p class="telemetry-note">An anonymous performance count is sent, with no file names, tag names, or contents.</p>
 
         <section class="file-input-section" aria-labelledby="file-input-label">
-          <div class="file-drop-zone">
+          <div class="file-drop-zone drop-zone">
             <input
               id="analysis-file-input"
-              class="file-input"
+              class="drop-zone-input"
               type="file"
               accept=".xml,application/xml,text/xml"
             />
@@ -87,7 +88,7 @@
                 <span class="file-drop-clip">
                   <span class="file-drop-prompt" id="file-drop-prompt">
                     <span class="file-drop-text">Drop an analysis XML file here, or choose a file.</span>
-                    <span class="file-choose-button">Choose file</span>
+                    <span class="button-file">Choose file</span>
                   </span>
                 </span>
               </span>
@@ -100,7 +101,7 @@
                 </span>
               </span>
             </label>
-            <button type="button" class="clear-file-button" id="clear-file-button" aria-label="Clear file" hidden>
+            <button type="button" class="clear-file-button button-icon" id="clear-file-button" aria-label="Clear file" hidden>
               <svg class="clear-file-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
                 <path d="M3.25 3.25 8.75 8.75M8.75 3.25 3.25 8.75" fill="none" stroke="currentColor" stroke-width="1.25" />
               </svg>
@@ -109,7 +110,7 @@
           <div class="sample-match" id="sample-match">
             <button
               type="button"
-              class="sample-match-button"
+              class="sample-match-button text-link"
               id="sample-match-button"
               aria-describedby="sample-match-caption"
             >
