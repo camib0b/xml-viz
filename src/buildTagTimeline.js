@@ -4,7 +4,20 @@
   var xmlViz = global.xmlViz;
 
   var MINIMUM_BAR_WIDTH_PERCENT = 0.15;
-  var AXIS_TICK_INTERVAL_SECONDS = 600;
+  var FALLBACK_AXIS_LABEL_WIDTH_PIXELS = 40;
+  var FALLBACK_AXIS_LABEL_GAP_PIXELS = 12;
+  // Phone bar tracks land under ~220px. The page column's track is above ~500px.
+  var AXIS_SECONDS_MIN_TRACK_PIXELS = 480;
+  var NICE_AXIS_INTERVALS_SECONDS = [
+    60,
+    120,
+    300,
+    600,
+    900,
+    1800,
+    3600,
+    7200,
+  ];
 
   function findTimeBounds(taggedInstances) {
     var minimumStart = Infinity;
@@ -30,35 +43,178 @@
     };
   }
 
-  function buildAxisTicks(timelineStartSeconds, timelineEndSeconds) {
-    var ticks = [];
-    var firstTick =
-      Math.ceil(timelineStartSeconds / AXIS_TICK_INTERVAL_SECONDS) *
-      AXIS_TICK_INTERVAL_SECONDS;
-    for (
-      var tickSeconds = firstTick;
-      tickSeconds <= timelineEndSeconds;
-      tickSeconds += AXIS_TICK_INTERVAL_SECONDS
-    ) {
-      var span = timelineEndSeconds - timelineStartSeconds;
-      var positionPercent = ((tickSeconds - timelineStartSeconds) / span) * 100;
-      ticks.push({
-        positionPercent: positionPercent,
-        label: xmlViz.formatSecondsAsClock(tickSeconds),
-      });
+  function resolvePositivePixels(value, fallbackPixels) {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+      return value;
     }
-    return ticks;
+    return fallbackPixels;
+  }
+
+  function timelineSpanSeconds(timelineStartSeconds, timelineEndSeconds) {
+    var spanSeconds = timelineEndSeconds - timelineStartSeconds;
+    if (!(spanSeconds > 0)) {
+      return 1;
+    }
+    return spanSeconds;
+  }
+
+  function chooseNiceAxisIntervalSeconds(minimumIntervalSeconds) {
+    for (var index = 0; index < NICE_AXIS_INTERVALS_SECONDS.length; index += 1) {
+      var intervalSeconds = NICE_AXIS_INTERVALS_SECONDS[index];
+      if (intervalSeconds + 1e-9 >= minimumIntervalSeconds) {
+        return intervalSeconds;
+      }
+    }
+    return null;
+  }
+
+  function firstNiceTickSeconds(timelineStartSeconds, intervalSeconds) {
+    var quotient = timelineStartSeconds / intervalSeconds;
+    var alignedSeconds = Math.ceil(quotient - 1e-9) * intervalSeconds;
+    if (alignedSeconds < timelineStartSeconds - 1e-6) {
+      alignedSeconds += intervalSeconds;
+    }
+    return alignedSeconds;
+  }
+
+  function wholeMinuteCount(totalSeconds) {
+    return Math.floor(Math.floor(totalSeconds) / 60);
+  }
+
+  function formatTimelineAxisLabel(totalSeconds, showSeconds) {
+    if (showSeconds) {
+      return xmlViz.formatSecondsAsClock(totalSeconds);
+    }
+    return wholeMinuteCount(totalSeconds) + "m";
+  }
+
+  function axisRangeCollapsesWithoutSeconds(timelineStartSeconds, timelineEndSeconds) {
+    return wholeMinuteCount(timelineStartSeconds) === wholeMinuteCount(timelineEndSeconds);
+  }
+
+  function timelineAxisShowsSeconds(
+    timelineStartSeconds,
+    timelineEndSeconds,
+    trackWidthPixels,
+    intervalSeconds
+  ) {
+    if (axisRangeCollapsesWithoutSeconds(timelineStartSeconds, timelineEndSeconds)) {
+      return true;
+    }
+    if (!(trackWidthPixels >= AXIS_SECONDS_MIN_TRACK_PIXELS)) {
+      return false;
+    }
+    var intervalNeedsSeconds =
+      typeof intervalSeconds === "number" &&
+      intervalSeconds > 0 &&
+      intervalSeconds % 60 !== 0;
+    var startHasSeconds = Math.floor(timelineStartSeconds) % 60 !== 0;
+    var endHasSeconds = Math.floor(timelineEndSeconds) % 60 !== 0;
+    return intervalNeedsSeconds || startHasSeconds || endHasSeconds;
+  }
+
+  function buildTimelineAxisTicks(
+    timelineStartSeconds,
+    timelineEndSeconds,
+    trackWidthPixels,
+    labelWidthPixels,
+    labelGapPixels,
+    showSeconds
+  ) {
+    var useSecondPrecision = showSeconds === true;
+    var spanSeconds = timelineSpanSeconds(timelineStartSeconds, timelineEndSeconds);
+    var resolvedLabelWidth = resolvePositivePixels(
+      labelWidthPixels,
+      FALLBACK_AXIS_LABEL_WIDTH_PIXELS
+    );
+    var resolvedGap = resolvePositivePixels(labelGapPixels, FALLBACK_AXIS_LABEL_GAP_PIXELS);
+    var roundingSlackPixels = 1;
+    var minimumTrackWidthPixels = resolvedLabelWidth * 2 + resolvedGap + roundingSlackPixels;
+    var ticks = [
+      {
+        seconds: timelineStartSeconds,
+        positionPercent: 0,
+        label: formatTimelineAxisLabel(timelineStartSeconds, useSecondPrecision),
+        placement: "start",
+      },
+    ];
+    var intervalSeconds = null;
+    var trackWidth = resolvePositivePixels(trackWidthPixels, 0);
+
+    if (trackWidth > 0) {
+      var minimumSpacingPixels = resolvedLabelWidth + resolvedGap + roundingSlackPixels;
+      var minimumIntervalSeconds = (minimumSpacingPixels / trackWidth) * spanSeconds;
+      intervalSeconds = chooseNiceAxisIntervalSeconds(minimumIntervalSeconds);
+    }
+
+    if (intervalSeconds !== null && trackWidth > 0) {
+      var edgePaddingPixels =
+        resolvedLabelWidth + resolvedGap + roundingSlackPixels + resolvedLabelWidth / 2;
+      var interiorStartPixels = edgePaddingPixels;
+      var interiorEndPixels = trackWidth - edgePaddingPixels;
+      var firstTickSeconds = firstNiceTickSeconds(timelineStartSeconds, intervalSeconds);
+      var maximumTickCount =
+        Math.ceil(spanSeconds / intervalSeconds) + 2;
+      for (var tickIndex = 0; tickIndex < maximumTickCount; tickIndex += 1) {
+        var tickSeconds = firstTickSeconds + tickIndex * intervalSeconds;
+        if (tickSeconds <= timelineStartSeconds + 1e-6) {
+          continue;
+        }
+        if (tickSeconds >= timelineEndSeconds - 1e-6) {
+          break;
+        }
+        var positionPixels = ((tickSeconds - timelineStartSeconds) / spanSeconds) * trackWidth;
+        if (positionPixels < interiorStartPixels || positionPixels > interiorEndPixels) {
+          continue;
+        }
+        ticks.push({
+          seconds: tickSeconds,
+          positionPercent: (positionPixels / trackWidth) * 100,
+          label: formatTimelineAxisLabel(tickSeconds, useSecondPrecision),
+          placement: "center",
+        });
+      }
+    }
+
+    ticks.push({
+      seconds: timelineEndSeconds,
+      positionPercent: 100,
+      label: formatTimelineAxisLabel(timelineEndSeconds, useSecondPrecision),
+      placement: "end",
+    });
+
+    return {
+      intervalSeconds: intervalSeconds,
+      labelWidthPixels: resolvedLabelWidth,
+      gapPixels: resolvedGap,
+      minimumTrackWidthPixels: minimumTrackWidthPixels,
+      showSeconds: useSecondPrecision,
+      ticks: ticks,
+    };
   }
 
   function formatLabelSummary(labels) {
-    if (labels.length === 0) {
+    if (!labels || labels.length === 0) {
       return "No labels";
     }
-    return labels
-      .map(function (label) {
-        return label.groupName + ": " + label.text;
-      })
-      .join("; ");
+    var parts = [];
+    for (var index = 0; index < labels.length; index += 1) {
+      var label = labels[index];
+      if (!label) {
+        continue;
+      }
+      var text = label.text == null ? "" : String(label.text).replace(/[\r\n]+/g, " ").trim();
+      if (!text) {
+        continue;
+      }
+      var groupName =
+        label.groupName == null ? "" : String(label.groupName).replace(/[\r\n]+/g, " ").trim();
+      parts.push(groupName ? groupName + ": " + text : text);
+    }
+    if (parts.length === 0) {
+      return "No labels";
+    }
+    return parts.join("; ");
   }
 
   function buildBarGeometry(
@@ -74,6 +230,9 @@
       100;
     var displayWidthPercent = Math.max(widthPercent, MINIMUM_BAR_WIDTH_PERCENT);
     var durationSeconds = taggedInstance.endSeconds - taggedInstance.startSeconds;
+    var durationLabel = Number.isFinite(durationSeconds)
+      ? durationSeconds.toFixed(1) + "s"
+      : "unknown duration";
     var tooltip =
       "ID " +
       taggedInstance.instanceId +
@@ -82,8 +241,8 @@
       " – " +
       xmlViz.formatSecondsAsClock(taggedInstance.endSeconds) +
       " (" +
-      durationSeconds.toFixed(1) +
-      "s) | " +
+      durationLabel +
+      ") | " +
       formatLabelSummary(taggedInstance.labels);
     return {
       leftPercent: leftPercent,
@@ -140,10 +299,13 @@
       timelineEndSeconds: timelineEndSeconds,
       axisStartLabel: xmlViz.formatSecondsAsClock(timelineStartSeconds),
       axisEndLabel: xmlViz.formatSecondsAsClock(timelineEndSeconds),
-      axisTicks: buildAxisTicks(timelineStartSeconds, timelineEndSeconds),
+      axisTicks: buildTimelineAxisTicks(timelineStartSeconds, timelineEndSeconds, 0, 0, 0).ticks,
       lanes: lanes,
     };
   }
 
+  xmlViz.formatTimelineAxisLabel = formatTimelineAxisLabel;
+  xmlViz.timelineAxisShowsSeconds = timelineAxisShowsSeconds;
+  xmlViz.buildTimelineAxisTicks = buildTimelineAxisTicks;
   xmlViz.buildTagTimeline = buildTagTimeline;
 })(typeof window !== "undefined" ? window : globalThis);
