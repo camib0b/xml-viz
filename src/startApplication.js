@@ -161,6 +161,7 @@
     var fileChosenLabel = document.getElementById("file-chosen-label");
     var sampleMatch = document.getElementById("sample-match");
     var sampleMatchButton = document.getElementById("sample-match-button");
+    var clearFileButton = document.getElementById("clear-file-button");
     bindThemeToggle(themeToggle);
     bindAnalysisFileDrop(fileInput, dropZone);
     var currentAnalysisDocument = null;
@@ -406,6 +407,9 @@
       if (fileChosenLabel) {
         fileChosenLabel.setAttribute("aria-hidden", "false");
       }
+      if (clearFileButton) {
+        clearFileButton.hidden = false;
+      }
       if (!dropZone) {
         return;
       }
@@ -414,6 +418,44 @@
         dropZone.classList.add("is-sample-landing");
       }
       revealChosenFileLabel();
+    }
+
+    function clearChosenFile() {
+      beginAnalysisLoad();
+      cancelSampleLanding();
+      chosenFileCommitted = false;
+      currentAnalysisDocument = null;
+      currentSourceFileName = "";
+      currentSourceFileBytes = 0;
+      selectedTagCodes = [];
+      exportDraft = null;
+      currentView = "overview";
+      fileNameDisplay.textContent = "";
+      fileNameDisplay.title = "";
+      if (fileInput) {
+        fileInput.value = "";
+      }
+      if (fileDropPrompt) {
+        fileDropPrompt.removeAttribute("aria-hidden");
+      }
+      if (fileChosenLabel) {
+        fileChosenLabel.setAttribute("aria-hidden", "true");
+      }
+      if (clearFileButton) {
+        clearFileButton.hidden = true;
+      }
+      if (sampleMatch) {
+        sampleMatch.hidden = false;
+      }
+      if (dropZone) {
+        dropZone.classList.remove("is-chosen", "is-label-visible", "is-sample-landing");
+      }
+      clearErrorMessage(errorElement);
+      clearExportStatus();
+      visualizationRoot.textContent = "";
+      if (sampleMatchButton) {
+        sampleMatchButton.focus();
+      }
     }
 
     function measureChosenLabelRect(fileName) {
@@ -571,6 +613,14 @@
           reportAnalysisLoadFailure(error, fileBytes, "parse", startedAt);
         });
     });
+
+    if (clearFileButton) {
+      clearFileButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        clearChosenFile();
+      });
+    }
 
     if (sampleMatchButton) {
       sampleMatchButton.addEventListener("click", function () {

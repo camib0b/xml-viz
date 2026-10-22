@@ -184,7 +184,8 @@ input {
 .theme-toggle,
 .action-button,
 .file-choose-button,
-.sample-match-button {
+.sample-match-button,
+.clear-file-button {
   transition:
     color 200ms var(--color-ease),
     background-color 200ms var(--color-ease),
@@ -217,6 +218,7 @@ input {
 .theme-toggle:focus-visible,
 .action-button:focus-visible,
 .sample-match-button:focus-visible,
+.clear-file-button:focus-visible,
 .form-text-input:focus-visible,
 .metadata-field-input:focus-visible {
   outline: 1px solid hsl(var(--ring));
@@ -325,6 +327,51 @@ html:not(.dark) .theme-icon-moon {
 .file-drop-zone.is-chosen {
   background: hsl(var(--muted));
   padding: 0.75rem 1rem;
+}
+
+.file-drop-label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.file-drop-zone.is-chosen .file-chosen-motion .file-drop-clip {
+  padding-right: 2.25rem;
+}
+
+.clear-file-button {
+  position: absolute;
+  right: 1rem;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: auto;
+  margin-bottom: auto;
+  padding: 0;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+}
+
+.clear-file-button:hover {
+  border-color: hsl(var(--foreground));
+}
+
+.clear-file-button:active {
+  transform: scale(0.97);
+}
+
+.clear-file-icon {
+  display: block;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .file-drop-zone.is-motion-frozen,
@@ -875,7 +922,8 @@ input[type="checkbox"] {
   .file-chosen-motion,
   .file-drop-prompt,
   .file-chosen-label,
-  .sample-file-chip {
+  .sample-file-chip,
+  .clear-file-button {
     transition: none;
   }
 
@@ -886,6 +934,7 @@ input[type="checkbox"] {
   .file-choose-button:hover,
   .file-drop-zone:active .file-choose-button,
   .sample-match-button:active,
+  .clear-file-button:active,
   .theme-icon,
   html:not(.dark) .theme-icon-sun,
   html:not(.dark) .theme-icon-moon,
