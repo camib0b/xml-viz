@@ -23,6 +23,7 @@
   --number-positive: 152 32% 28%;
 
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-landing: cubic-bezier(0.16, 1, 0.3, 1);
   --color-ease: cubic-bezier(0.4, 0, 0.2, 1);
 
   --inbox-fill: hsl(0 0% 100% / 0.72);
@@ -183,7 +184,8 @@ input {
 .theme-toggle,
 .action-button,
 .file-choose-button,
-.sample-match-button {
+.sample-match-button,
+.clear-file-button {
   transition:
     color 200ms var(--color-ease),
     background-color 200ms var(--color-ease),
@@ -216,6 +218,7 @@ input {
 .theme-toggle:focus-visible,
 .action-button:focus-visible,
 .sample-match-button:focus-visible,
+.clear-file-button:focus-visible,
 .form-text-input:focus-visible,
 .metadata-field-input:focus-visible {
   outline: 1px solid hsl(var(--ring));
@@ -302,17 +305,81 @@ html:not(.dark) .theme-icon-moon {
 }
 
 .file-input-section {
+  position: relative;
   margin: 0;
 }
 
 .file-drop-zone {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   border: 1px solid hsl(var(--border));
   background: var(--inbox-fill);
   padding: 2rem 1rem;
   text-align: center;
   cursor: pointer;
+  transition:
+    padding 400ms var(--ease-landing),
+    background-color 400ms var(--ease-landing);
+}
+
+.file-drop-zone.is-chosen {
+  background: hsl(var(--muted));
+  padding: 0.75rem 1rem;
+}
+
+.file-drop-label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.file-drop-zone.is-chosen .file-chosen-motion .file-drop-clip {
+  padding-right: 2.25rem;
+}
+
+.clear-file-button {
+  position: absolute;
+  right: 1rem;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: auto;
+  margin-bottom: auto;
+  padding: 0;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+}
+
+.clear-file-button:hover {
+  border-color: hsl(var(--foreground));
+}
+
+.clear-file-button:active {
+  transform: scale(0.97);
+}
+
+.clear-file-icon {
+  display: block;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.file-drop-zone.is-motion-frozen,
+.file-drop-zone.is-motion-frozen .file-drop-prompt-motion,
+.file-drop-zone.is-motion-frozen .file-chosen-motion,
+.file-drop-zone.is-motion-frozen .file-drop-prompt,
+.file-drop-zone.is-motion-frozen .file-chosen-label {
+  transition: none;
 }
 
 .file-drop-zone.is-dragging {
@@ -334,6 +401,44 @@ html:not(.dark) .theme-icon-moon {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.file-drop-prompt-motion,
+.file-chosen-motion {
+  display: grid;
+  width: 100%;
+  min-height: 0;
+  transition: grid-template-rows 400ms var(--ease-landing);
+}
+
+.file-drop-prompt-motion {
+  grid-template-rows: 1fr;
+}
+
+.file-chosen-motion {
+  grid-template-rows: 0fr;
+}
+
+.file-drop-zone.is-chosen .file-drop-prompt-motion {
+  grid-template-rows: 0fr;
+}
+
+.file-drop-zone.is-chosen .file-chosen-motion {
+  grid-template-rows: 1fr;
+}
+
+.file-drop-clip {
+  min-height: 0;
+  overflow: hidden;
+  text-align: center;
+}
+
+.file-drop-prompt {
+  transition: opacity 400ms var(--ease-landing);
+}
+
+.file-drop-zone.is-chosen .file-drop-prompt {
+  opacity: 0;
 }
 
 .file-drop-text {
@@ -398,8 +503,34 @@ html:not(.dark) .theme-icon-moon {
   line-height: 1.1rem;
 }
 
+.file-chosen-label,
+.sample-file-chip {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  padding: 0.35rem 0.5rem;
+  gap: 0.5rem;
+}
+
+.file-chosen-label {
+  opacity: 0;
+}
+
+.file-drop-zone.is-label-visible:not(.is-sample-landing) .file-chosen-label {
+  opacity: 1;
+  transition: opacity 400ms var(--ease-landing);
+}
+
+.file-drop-zone.is-sample-landing.is-label-visible .file-chosen-label {
+  opacity: 1;
+  transition: none;
+}
+
 .file-format-note {
-  margin: 1rem 0 0;
+  margin: 0;
+  flex: 0 0 auto;
   color: hsl(var(--muted-foreground));
   font-size: 0.75rem;
   line-height: 1.1rem;
@@ -408,10 +539,32 @@ html:not(.dark) .theme-icon-moon {
 }
 
 .selected-file-name {
-  margin: 0.75rem 0 0;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
   color: hsl(var(--foreground));
   font-size: 0.875rem;
   line-height: 1.35rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sample-file-chip {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  top: 0;
+  opacity: 1;
+  transform: translate(0, 0);
+  pointer-events: none;
+}
+
+.sample-file-chip.is-landing {
+  opacity: 1;
+  transform: translate(var(--chip-translate-x), var(--chip-translate-y));
+  transition:
+    transform 400ms var(--ease-landing),
+    opacity 400ms var(--ease-landing);
 }
 
 .read-error-message,
@@ -763,7 +916,14 @@ input[type="checkbox"] {
   .action-button,
   .file-choose-button,
   .sample-match-button,
-  .theme-icon {
+  .theme-icon,
+  .file-drop-zone,
+  .file-drop-prompt-motion,
+  .file-chosen-motion,
+  .file-drop-prompt,
+  .file-chosen-label,
+  .sample-file-chip,
+  .clear-file-button {
     transition: none;
   }
 
@@ -774,6 +934,7 @@ input[type="checkbox"] {
   .file-choose-button:hover,
   .file-drop-zone:active .file-choose-button,
   .sample-match-button:active,
+  .clear-file-button:active,
   .theme-icon,
   html:not(.dark) .theme-icon-sun,
   html:not(.dark) .theme-icon-moon,

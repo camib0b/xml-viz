@@ -75,17 +75,38 @@
         <p class="telemetry-note">An anonymous performance count is sent, with no file names, tag names, or contents.</p>
 
         <section class="file-input-section" aria-labelledby="file-input-label">
-          <label id="file-input-label" class="file-drop-zone">
+          <div class="file-drop-zone">
             <input
               id="analysis-file-input"
               class="file-input"
               type="file"
               accept=".xml,application/xml,text/xml"
             />
-            <span class="file-drop-text">Drop an analysis XML file here, or choose a file.</span>
-            <span class="file-choose-button">Choose file</span>
-          </label>
-          <div class="sample-match">
+            <label id="file-input-label" class="file-drop-label" for="analysis-file-input">
+              <span class="file-drop-prompt-motion">
+                <span class="file-drop-clip">
+                  <span class="file-drop-prompt" id="file-drop-prompt">
+                    <span class="file-drop-text">Drop an analysis XML file here, or choose a file.</span>
+                    <span class="file-choose-button">Choose file</span>
+                  </span>
+                </span>
+              </span>
+              <span class="file-chosen-motion">
+                <span class="file-drop-clip">
+                  <span class="file-chosen-label" id="file-chosen-label" aria-hidden="true">
+                    <span class="file-format-note">XML</span>
+                    <span id="selected-file-name" class="selected-file-name"></span>
+                  </span>
+                </span>
+              </span>
+            </label>
+            <button type="button" class="clear-file-button" id="clear-file-button" aria-label="Clear file" hidden>
+              <svg class="clear-file-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                <path d="M3.25 3.25 8.75 8.75M8.75 3.25 3.25 8.75" fill="none" stroke="currentColor" stroke-width="1.25" />
+              </svg>
+            </button>
+          </div>
+          <div class="sample-match" id="sample-match">
             <button
               type="button"
               class="sample-match-button"
@@ -98,8 +119,6 @@
               England vs China, Junior World Cup, 2 Dec 2025
             </p>
           </div>
-          <p class="file-format-note">XML</p>
-          <p id="selected-file-name" class="selected-file-name">No file selected</p>
           <p id="read-error-message" class="read-error-message" hidden role="alert"></p>
           <p id="export-status-message" class="export-status-message" hidden></p>
         </section>
