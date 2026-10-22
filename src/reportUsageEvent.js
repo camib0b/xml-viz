@@ -178,12 +178,15 @@
   }
 
   /**
-   * One small POST after a parse or a subset export. The body is only the
-   * fields POST /api/xml-event accepts. Failures are ignored.
+   * One small POST after a file parse, a sample load, or a subset export.
+   * The body is only the fields POST /api/xml-event accepts. Failures are ignored.
    */
   function reportUsageEvent(event) {
     try {
-      if (!event || (event.action !== "parse" && event.action !== "export")) {
+      if (
+        !event ||
+        (event.action !== "parse" && event.action !== "sample" && event.action !== "export")
+      ) {
         return;
       }
       if (event.outcome !== "success" && event.outcome !== "error") {

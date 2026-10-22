@@ -182,7 +182,8 @@ input {
 .back-link,
 .theme-toggle,
 .action-button,
-.file-choose-button {
+.file-choose-button,
+.sample-match-button {
   transition:
     color 200ms var(--color-ease),
     background-color 200ms var(--color-ease),
@@ -214,6 +215,7 @@ input {
 .back-link:focus-visible,
 .theme-toggle:focus-visible,
 .action-button:focus-visible,
+.sample-match-button:focus-visible,
 .form-text-input:focus-visible,
 .metadata-field-input:focus-visible {
   outline: 1px solid hsl(var(--ring));
@@ -362,6 +364,38 @@ html:not(.dark) .theme-icon-moon {
 
 .file-drop-zone:active .file-choose-button {
   transform: scale(0.97);
+}
+
+.sample-match {
+  margin-top: 0.75rem;
+}
+
+.sample-match-button {
+  display: inline-block;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  line-height: 1.1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sample-match-button:hover {
+  color: hsl(var(--foreground));
+}
+
+.sample-match-button:active {
+  transform: scale(0.97);
+}
+
+.sample-match-caption {
+  margin: 0.35rem 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  line-height: 1.1rem;
 }
 
 .file-format-note {
@@ -728,6 +762,7 @@ input[type="checkbox"] {
   .theme-toggle,
   .action-button,
   .file-choose-button,
+  .sample-match-button,
   .theme-icon {
     transition: none;
   }
@@ -738,6 +773,7 @@ input[type="checkbox"] {
   .action-button:active:not(:disabled),
   .file-choose-button:hover,
   .file-drop-zone:active .file-choose-button,
+  .sample-match-button:active,
   .theme-icon,
   html:not(.dark) .theme-icon-sun,
   html:not(.dark) .theme-icon-moon,
