@@ -173,7 +173,7 @@
               return code !== lane.code;
             });
           }
-          tagSelectionOptions.onSelectedCodesChange(nextSelectedCodes, "toggle");
+          tagSelectionOptions.onSelectedCodesChange(nextSelectedCodes);
         });
         laneLabel.appendChild(checkbox);
       }
@@ -211,7 +211,7 @@
       var allCodes = timeline.lanes.map(function (lane) {
         return lane.code;
       });
-      tagSelectionOptions.onSelectedCodesChange(allCodes, "all");
+      tagSelectionOptions.onSelectedCodesChange(allCodes);
     });
     buttonRow.appendChild(selectAllButton);
 
@@ -219,7 +219,7 @@
     clearButton.type = "button";
     clearButton.textContent = "Clear selection";
     clearButton.addEventListener("click", function () {
-      tagSelectionOptions.onSelectedCodesChange([], "clear");
+      tagSelectionOptions.onSelectedCodesChange([]);
     });
     buttonRow.appendChild(clearButton);
 
