@@ -285,6 +285,14 @@ html:not(.dark) .theme-icon-moon {
 
 .page-intro {
   max-width: 36rem;
+  margin: 0 0 0.75rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+}
+
+.telemetry-note {
+  max-width: 36rem;
   margin: 0 0 2rem;
   color: hsl(var(--muted-foreground));
   font-size: 0.875rem;
