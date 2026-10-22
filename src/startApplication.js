@@ -162,8 +162,20 @@
     var exportDraft = null;
     var currentView = "overview";
 
-    function scrollPageToTop() {
-      window.scrollTo(0, 0);
+    function scrollPrepareExportHeaderIntoView() {
+      var sectionHeading = visualizationRoot.querySelector(
+        ".export-preparation-header .section-heading"
+      );
+      if (!sectionHeading) {
+        return;
+      }
+      var prefersReducedMotion =
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      sectionHeading.scrollIntoView({
+        block: "start",
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+      });
     }
 
     function clearExportStatus() {
@@ -292,7 +304,7 @@
           }
         },
       });
-      scrollPageToTop();
+      scrollPrepareExportHeaderIntoView();
     }
 
     fileInput.addEventListener("change", function () {
