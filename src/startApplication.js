@@ -268,6 +268,14 @@
     var currentSourceFileName = "";
     var currentSourceFileBytes = 0;
     var selectedTagCodes = [];
+
+    function replaceSelectedTagCodes(nextSelectedCodes) {
+      selectedTagCodes.length = 0;
+      for (var codeIndex = 0; codeIndex < nextSelectedCodes.length; codeIndex += 1) {
+        selectedTagCodes.push(nextSelectedCodes[codeIndex]);
+      }
+    }
+
     var exportDraft = null;
     var currentView = "overview";
     var analysisLoadGeneration = 0;
@@ -344,9 +352,9 @@
       }
       xmlViz.renderVisualization(visualizationRoot, currentAnalysisDocument, {
         tagSelection: {
-          selectedCodes: selectedTagCodes.slice(),
+          selectedCodes: selectedTagCodes,
           onSelectedCodesChange: function (nextSelectedCodes) {
-            selectedTagCodes = nextSelectedCodes.slice();
+            replaceSelectedTagCodes(nextSelectedCodes);
             xmlViz.updateTagSelectionDisplay(visualizationRoot, selectedTagCodes);
           },
           onPrepareExport: function () {
@@ -529,7 +537,7 @@
       currentAnalysisDocument = null;
       currentSourceFileName = "";
       currentSourceFileBytes = 0;
-      selectedTagCodes = [];
+      replaceSelectedTagCodes([]);
       exportDraft = null;
       currentView = "overview";
       fileNameDisplay.textContent = "";
@@ -667,7 +675,7 @@
       currentAnalysisDocument = analysisDocument;
       currentSourceFileName = fileName;
       currentSourceFileBytes = fileBytes;
-      selectedTagCodes = [];
+      replaceSelectedTagCodes([]);
       commitChosenFile(fileName);
       renderOverviewView();
       var counts = documentCounts(analysisDocument);

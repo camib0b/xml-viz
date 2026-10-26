@@ -602,16 +602,11 @@
         checkbox.type = "checkbox";
         checkbox.checked = Boolean(selectedLookup[lane.code]);
         checkbox.addEventListener("change", function () {
-          var nextSelectedCodes = tagSelectionOptions.selectedCodes.slice();
-          if (checkbox.checked) {
-            if (nextSelectedCodes.indexOf(lane.code) < 0) {
-              nextSelectedCodes.push(lane.code);
-            }
-          } else {
-            nextSelectedCodes = nextSelectedCodes.filter(function (code) {
-              return code !== lane.code;
-            });
-          }
+          var nextSelectedCodes = xmlViz.toggleSelectedTagCodes(
+            tagSelectionOptions.selectedCodes,
+            lane.code,
+            checkbox.checked
+          );
           tagSelectionOptions.onSelectedCodesChange(nextSelectedCodes);
         });
         laneLabel.appendChild(checkbox);
